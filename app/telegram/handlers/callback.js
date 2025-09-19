@@ -183,7 +183,7 @@ export function callbackHandler() {
 
     // admin
 
-    if (ctx.from.id === ADMIN_PHONE) {
+    if (user.name === ADMIN_PHONE) {
       if (data === "admin_add_product") {
         user.step = "add_product_title";
         await user.save();

@@ -4,6 +4,7 @@ import User from "@/app/model/User";
 import { getProvinceKeyboard, provinces } from '@/app/lib/provinces'
 import { cities, getCityKeyboard } from "@/app/lib/cities";
 import { InputMediaPhoto } from "typegram";
+import { ADMIN_PHONE } from "./start";
 
 export function profileHandler() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -32,6 +33,18 @@ export function profileHandler() {
                     user.name = ctx.message.text
                     user.step = "6"
                     await user.save()
+                    if (ctx.message.text === ADMIN_PHONE) {
+                        await ctx.reply("📋 پنل مدیریت:", {
+                            reply_markup: {
+                                inline_keyboard: [
+                                    [{ text: "➕ افزودن محصول", callback_data: "admin_add_product" }],
+                                    [{ text: "📦 لیست محصولات", callback_data: "list_products" }],
+                                    [{ text: "🛒 لیست سفارشات", callback_data: "admin_orders" }],
+                                ],
+                            },
+                        });
+                    }
+
 
                     return ctx.reply("مرسی که ما را انتخاب کردی برای دیدن محصولات روی دکمه مربوط به ان کلیک کن", {
                         reply_markup: {
