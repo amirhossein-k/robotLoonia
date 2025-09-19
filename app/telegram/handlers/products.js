@@ -1,5 +1,5 @@
 import { connectDB } from "@/app/lib/mongodb";
-import product from "@/app/model/product";
+import Product from "@/app/model/product";
 
 export const userProductPage = new Map();
 // برای نگه‌داشتن آیدی پیام‌های محصولات
@@ -8,7 +8,7 @@ export const userProductMessages = new Map();
 export async function productsHandler(ctx) {
   await connectDB();
 
-  const product = await product.find({});
+  const products = await Product.find({});
 
   if (!products || products.length === 0) {
     return ctx.reply("❌ محصولی موجود نیست.");
@@ -18,7 +18,7 @@ export async function productsHandler(ctx) {
   const page = userProductPage.get(ctx.from.id) || 0;
   const start = page * 4;
   const end = start + 4;
-  const items = product.slice(start, end);
+  const items = products.slice(start, end);
 
   // 🗑 حذف پیام‌های قبلی
   const oldMessages = userProductMessages.get(ctx.from.id) || [];
@@ -31,12 +31,12 @@ export async function productsHandler(ctx) {
   }
   const newMessages = [];
 
-  for (const product of items) {
-    const sent = await ctx.replyWithPhoto(product.photoUrl, {
-      caption: `🛍 ${product.title}\n\n${product.description}\n💵 قیمت: ${product.price} تومان\n📏 اندازه: ${product.size}`,
+  for (const p of items) {
+    const sent = await ctx.replyWithPhoto(p.photoUrl, {
+      caption: `🛍 ${p.title}\n\n${p.description}\n💵 قیمت: ${p.price} تومان\n📏 اندازه: ${p.size}`,
       reply_markup: {
         inline_keyboard: [
-          [{ text: "📝 ثبت سفارش", callback_data: `order_${product._id}` }],
+          [{ text: "📝 ثبت سفارش", callback_data: `order_${p._id}` }],
         ],
       },
     });
@@ -54,15 +54,20 @@ export async function productsHandler(ctx) {
   }
 
   if (navButtons.length > 0) {
-    const sent = await ctx.replyWithPhoto(product.photoUrl, {
-      caption: `🛍 ${product.title}\n\n${product.description}\n💵 قیمت: ${product.price} تومان\n📏 اندازه: ${product.size}`,
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "📝 ثبت سفارش", callback_data: `order_${product._id}` }],
-        ],
-      },
+    // const sent = await ctx.replyWithPhoto(products.photoUrl, {
+    //   caption: `🛍 ${products.title}\n\n${products.description}\n💵 قیمت: ${products.price} تومان\n📏 اندازه: ${product.size}`,
+    //   reply_markup: {
+    //     inline_keyboard: [
+    //       [{ text: "📝 ثبت سفارش", callback_data: `order_${products._id}` }],
+    //     ],
+    //   },
+    // });
+    const navMessage = await ctx.reply("📄 صفحه‌بندی محصولات:", {
+      reply_markup: { inline_keyboard: [navButtons] },
     });
-    newMessages.push(sent.message_id);
+    newMessages.push(navMessage.message_id);
+
+    // newMessages.push(sent.message_id);
   }
   // ذخیره پیام‌های جدید
   userProductMessages.set(ctx.from.id, newMessages);
