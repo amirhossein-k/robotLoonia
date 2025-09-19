@@ -540,6 +540,12 @@ bot.on("text", async (ctx) => {
         await user.save();
         return ctx.reply("📸 لطفاً عکس محصول را ارسال کنید:");
     }
+    // if (user.step === "add_product_size") {
+    //     user.tempProduct.size = ctx.message.text;
+    //     user.step = "add_product_photo";
+    //     await user.save();
+    //     return ctx.reply("📸 لطفاً عکس محصول را ارسال کنید:");
+    // }
 
     // 
 

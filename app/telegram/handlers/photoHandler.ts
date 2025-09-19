@@ -75,7 +75,7 @@ export function photoUploadHandler() {
                     description: user.tempProduct.description,
                     price: user.tempProduct.price,
                     size: user.tempProduct.size,
-                    photo: fileId,
+                    photoUrl: fileId,
                 });
 
                 user.step = "done";
