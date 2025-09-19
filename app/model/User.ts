@@ -21,7 +21,13 @@ const userSchema = new Schema(
         city: String,
         // وضعیت انتظار برای آپلود عکس را در DB نگه می‌داریم
         awaitingPhotoSlot: { type: String, enum: ["slot1", "slot2", "slot3", null], default: null },
-
+        // فیلد موقت برای افزودن محصول
+        tempProduct: {
+            title: String,
+            description: String,
+            price: String,
+            size: String,
+        },
         photos: {
             slot1: { type: String, default: null },
             slot2: { type: String, default: null },
