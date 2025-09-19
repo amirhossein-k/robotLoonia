@@ -19,27 +19,27 @@ export function startHandler() {
             ],
           },
         });
-      }
-
-      return ctx.telegram.sendMessage(
-        ctx.chat.id,
-        `👋 خوش برگشتی ${user.name}`,
-        {
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: "محصولات", callback_data: "show_product" }],
-              [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
-              [{ text: "ادرس", callback_data: "address" }],
-              [
-                {
-                  text: "دسته بندی",
-                  callback_data: "category",
-                },
+      } else {
+        return ctx.telegram.sendMessage(
+          ctx.chat.id,
+          `👋 خوش برگشتی ${user.name}`,
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: "محصولات", callback_data: "show_product" }],
+                [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
+                [{ text: "ادرس", callback_data: "address" }],
+                [
+                  {
+                    text: "دسته بندی",
+                    callback_data: "category",
+                  },
+                ],
               ],
-            ],
-          },
-        }
-      );
+            },
+          }
+        );
+      }
     }
     // اگر کاربر جدید بود یا پروفایل ناقص داشت → مرحله ۱
     // اگر کاربر جدید است
