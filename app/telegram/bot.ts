@@ -617,7 +617,7 @@ bot.on("text", async (ctx) => {
 
     if (user.step === "address_postal_code") {
         user.postalCode = ctx.message.text.trim();
-        user.step = 6; // یا هر step که نشان‌دهنده تکمیل باشد (مثلاً برگشت به پروفایل کامل)
+        user.step = "6"; // یا هر step که نشان‌دهنده تکمیل باشد (مثلاً برگشت به پروفایل کامل)
         await user.save();
         console.log(`[DEBUG] Postal code set: ${user.postalCode}, address completed`);
         return ctx.reply("✅ اطلاعات آدرس شما با موفقیت ذخیره شد!");

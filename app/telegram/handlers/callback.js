@@ -52,13 +52,19 @@ export function callbackHandler() {
     }
 
     if (data === "address") {
-      await ctx.answerCbQuery(); // 🔴 اضافه شده: این خط مشکل اصلی را حل می‌کند (پاسخ به callback)
-      user.step = "address_province";
-      await user.save();
-      console.log(
-        `[DEBUG] Set step to address_province for user ${ctx.from.id}`
-      );
-      return ctx.reply("🗺 لطفاً نام استان خود را وارد کنید:");
+      try {
+        await ctx.answerCbQuery(); // بلافاصله پاسخ به تلگرام (حل ارور 400)
+        user.step = "address_province"; // حالا string است
+        await user.save();
+        console.log(
+          `[DEBUG] Set step to address_province for user ${ctx.from.id}`
+        );
+        return ctx.reply("🗺 لطفاً نام استان خود را وارد کنید:");
+      } catch (err) {
+        console.error(`[ERROR] Failed to set address step: ${err.message}`);
+        await ctx.answerCbQuery("❌ خطا در ذخیره اطلاعات"); // حتی در error، query را close کنیم
+        return ctx.reply("❌ خطایی رخ داد. لطفاً دوباره امتحان کنید.");
+      }
     }
 
     // قوانین
@@ -86,11 +92,11 @@ export function callbackHandler() {
     // مرحله ۴: انتخاب استان
     if (
       ctx.callbackQuery?.data.startsWith("profile_province_") &&
-      user?.step === 4
+      user?.step === "4"
     ) {
       const provinceKey = data.replace("profile_province_", "");
       user.province = provinceKey;
-      user.step = 5;
+      user.step = "5";
       await user.save();
 
       await ctx.answerCbQuery();
@@ -110,7 +116,7 @@ export function callbackHandler() {
 
       user.province = provinceCode;
       user.city = cityCode;
-      user.step = 6; // پروفایل تکمیل شد
+      user.step = "6"; // پروفایل تکمیل شد
       await user.save();
       const genderText =
         user.gender === "male" ? "مرد" : user.gender === "female" ? "زن" : "-";

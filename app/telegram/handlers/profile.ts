@@ -15,22 +15,22 @@ export function profileHandler() {
         if (!user) {
             user = await User.create({
                 telegramId: ctx.from.id,
-                step: 1, // شروع پروفایل
+                step: "1", // شروع پروفایل
             });
         } else {
             // اگر step نامعتبر بود، آن را ریست کن (اجتناب از ریست کردن پروفایل کامل شده)
-            if (!user.step || user.step < 1) {
-                user.step = 1;
+            if (!user.step || user.step < "1") {
+                user.step = "1";
                 await user.save();
             }
         }
         // اگر پروفایل کامل است، ثبت نام را اجرا نکن
-        if (user.step >= 6) return;
+        if (user.step >= "6") return;
         switch (user.step) {
-            case 1:
+            case "1":
                 if (ctx.message?.text) {
                     user.name = ctx.message.text
-                    user.step = 6
+                    user.step = "6"
                     await user.save()
 
                     return ctx.reply("مرسی که ما را انتخاب کردی برای دیدن محصولات روی دکمه مربوط به ان کلیک کن", {
@@ -55,7 +55,7 @@ export function profileHandler() {
 
             default:
                 // 🔥 اینجا به جای پیام خطا، کاربر رو برگردون به مرحله اول
-                user.step = 1;
+                user.step = "1";
                 await user.save();
                 return ctx.reply("📌 مرحله ۱ از ۵: لطفاً اسمت رو وارد کن:");
         }

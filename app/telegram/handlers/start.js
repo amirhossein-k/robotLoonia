@@ -7,7 +7,7 @@ export function startHandler() {
 
     let user = await User.findOne({ telegramId: ctx.from.id });
     // اگر کاربر وجود داره و پروفایل کامل کرده
-    if (user && user.step >= 6) {
+    if (user && user.step >= "6") {
       return ctx.telegram.sendMessage(
         ctx.chat.id,
         `👋 خوش برگشتی ${user.name}`,
@@ -33,12 +33,12 @@ export function startHandler() {
     if (!user) {
       user = await User.create({
         telegramId: ctx.from.id,
-        step: 1,
+        step: "1",
       });
     } else {
       // اگر اسم یا مرحله اولیه هنوز تکمیل نشده، فقط همین را ریست کن
-      if (!user.name || user.step < 1) {
-        user.step = 1;
+      if (!user.name || user.step < "1") {
+        user.step = "1";
         await user.save();
       } else {
         // پروفایل ناقص ولی اسم دارد → مرحله بعد یا پیام منو بده

@@ -8,7 +8,7 @@ const userSchema = new Schema(
         username: String,
         firstName: String,
         lastName: String,
-        step: { type: Number, default: 1 }, // تغییر به default = 1
+        step: { type: String, default: "1" }, // تغییر به default = 1
         // 🔥 فیلدهای آدرس جدید
         provinceText: String,
         cityText: String,
