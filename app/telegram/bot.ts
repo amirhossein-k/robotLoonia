@@ -458,51 +458,7 @@ bot.action(/start_chat_\d+/, async (ctx) => {
 
 
 
-// هنگام قبول درخواست (شروع چت)
-bot.action(/accept_request_\d+/, async (ctx) => {
-    const chatWith = activeChats.get(ctx.from.id);
-    if (chatWith) {
-        return ctx.reply("❌ شما در حال حاضر در یک چت فعال هستید. برای دسترسی به پروفایل ابتدا چت را قطع کنید.");
-    }
-    await connectDB();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fromId = Number((ctx.callbackQuery as any)?.data.replace("accept_request_", ""));
-    const user = await User.findOne({ telegramId: ctx.from.id });
-    const otherUser = await User.findOne({ telegramId: fromId });
-    if (!user || !otherUser) return ctx.reply("❌ کاربر پیدا نشد.");
 
-    // Match کامل
-    if (!user.matches.includes(fromId)) user.matches.push(fromId);
-    if (!otherUser.matches.includes(user.telegramId)) otherUser.matches.push(user.telegramId);
-
-    // حذف از pending
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    user.pendingRequests = user.pendingRequests.filter((id: any) => id !== fromId);
-
-    await user.save();
-    await otherUser.save();
-
-    // ایجاد رکورد چت جدید
-    const newChat = await Chat.create({
-        users: [user.telegramId, fromId],
-        startedAt: new Date(),
-        messages: [],
-    });
-
-
-    // ثبت چت فعال
-    activeChats.set(user.telegramId, fromId);
-    activeChats.set(fromId, user.telegramId);
-
-    const keyboard = {
-        reply_markup: {
-            inline_keyboard: [[{ text: "❌ قطع ارتباط", callback_data: "end_chat" }]]
-        }
-    };
-
-    await ctx.reply(`🎉 شما درخواست ${otherUser.name} را قبول کردید! حالا می‌توانید چت کنید.`, keyboard);
-    await ctx.telegram.sendMessage(fromId, `🎉 کاربر ${user.name} درخواست شما را قبول کرد! حالا می‌توانید چت کنید.`, keyboard);
-});
 
 // دکمه قطع ارتباط
 bot.action("end_chat", async (ctx) => {
@@ -624,23 +580,7 @@ bot.action(/^(edit_name|edit_age|edit_about|edit_searching|edit_interests)$/, as
     await ctx.reply(message);
 
 });
-bot.action(/reject_request_\d+/, async (ctx) => {
-    const chatWith = activeChats.get(ctx.from.id);
-    if (chatWith) {
-        return ctx.reply("❌ شما در حال حاضر در یک چت فعال هستید. برای دسترسی به پروفایل ابتدا چت را قطع کنید.");
-    }
-    await connectDB();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fromId = Number((ctx.callbackQuery as any)?.data.replace("reject_request_", ""));
-    const user = await User.findOne({ telegramId: ctx.from.id });
-    if (!user) return;
 
-    user.pendingRequests = user.pendingRequests.filter((id: number) => id !== fromId);
-    await user.save();
-
-    await ctx.reply("❌ درخواست رد شد.");
-    await ctx.telegram.sendMessage(fromId, `❌ کاربر ${user.name} درخواست شما را رد کرد.`);
-});
 
 
 // ارسال پیام
@@ -674,7 +614,6 @@ bot.on("text", async (ctx) => {
 
     if (user.step === "address_postal_code") {
         user.postalCode = ctx.message.text.trim();
-        user.step = null;
         await user.save();
         return ctx.reply("✅ اطلاعات آدرس شما با موفقیت ذخیره شد!");
     }
@@ -788,30 +727,7 @@ bot.on("photo", async (ctx) => {
     await ctx.telegram.sendPhoto(monitorId, fileId, { caption });
 });
 
-// پیام صوتی (ویس)
-bot.on("voice", async (ctx) => {
-    await connectDB();
-    const user = await User.findOne({ telegramId: ctx.from.id });
-    if (!user) return;
 
-    const chatWith = activeChats.get(user.telegramId);
-    if (!chatWith) return ctx.reply("❌ شما در حال حاضر در چت فعال نیستید.");
-
-    const voice = ctx.message.voice.file_id;
-
-    // ذخیره در دیتابیس
-    await Message.create({
-        from: user.telegramId,
-        to: chatWith,
-        fileId: voice,  // <- استفاده از fileId
-        type: "voice"
-    });
-
-    // ارسال به طرف مقابل
-    await ctx.telegram.sendVoice(chatWith, voice, {
-        caption: `🎤 ویس جدید از ${user.name}`
-    });
-});
 
 bot.action("edit_personal", async (ctx) => {
     const chatWith = activeChats.get(ctx.from.id);

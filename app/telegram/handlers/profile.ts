@@ -30,7 +30,7 @@ export function profileHandler() {
             case 1:
                 if (ctx.message?.text) {
                     user.name = ctx.message.text
-                    user.step = 2
+                    user.step = 6
                     await user.save()
 
                     return ctx.reply("مرسی که ما را انتخاب کردی برای دیدن محصولات روی دکمه مربوط به ان کلیک کن", {

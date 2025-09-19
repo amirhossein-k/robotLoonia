@@ -57,21 +57,38 @@ export function startHandler() {
       );
     }
     // اگر کاربر جدید بود یا پروفایل ناقص داشت → مرحله ۱
-
+    // اگر کاربر جدید است
     if (!user) {
       user = await User.create({
         telegramId: ctx.from.id,
-        // username: ctx.from.username,
-        // firstName: ctx.from.first_name,
-        // lastName: ctx.from.last_name,
         step: 1,
       });
     } else {
-      user.step = 1;
-      await user.save();
+      // اگر اسم یا مرحله اولیه هنوز تکمیل نشده، فقط همین را ریست کن
+      if (!user.name || user.step < 1) {
+        user.step = 1;
+        await user.save();
+      } else {
+        // پروفایل ناقص ولی اسم دارد → مرحله بعد یا پیام منو بده
+        return ctx.telegram.sendMessage(
+          ctx.chat.id,
+          `👋 خوش برگشتی ${user.name}`,
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: "محصولات", callback_data: "show_product" }],
+                [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
+                [{ text: "ادرس", callback_data: "edit_profile" }],
+                [{ text: "دسته بندی", callback_data: "category" }],
+              ],
+            },
+          }
+        );
+      }
     }
-
-    // پیام خوش‌آمد + درخواست اسم (در caption)
-    await ctx.reply("👋 خوش آمدی! .\n\n📌  لطفاً اسمت رو ارسال کن.");
+    // پیام درخواست اسم فقط وقتی اسم وجود ندارد
+    if (!user.name) {
+      await ctx.reply("👋 خوش آمدی!\n\n📌 لطفاً اسمت را ارسال کن.");
+    }
   };
 }

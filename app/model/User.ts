@@ -19,7 +19,6 @@ const userSchema = new Schema(
         age: Number,
         province: String,
         city: String,
-
         // وضعیت انتظار برای آپلود عکس را در DB نگه می‌داریم
         awaitingPhotoSlot: { type: String, enum: ["slot1", "slot2", "slot3", null], default: null },
 
@@ -29,13 +28,7 @@ const userSchema = new Schema(
             slot3: { type: String, default: null },
         },
 
-
-
         pendingRequests: { type: [Number], default: [] }, // درخواست‌هایی که کاربر باید قبول کند
-
-
-
-
         bio: { type: String, default: "" },
         interests: { type: [String], default: [] },
 
