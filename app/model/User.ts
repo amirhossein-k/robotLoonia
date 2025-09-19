@@ -9,7 +9,11 @@ const userSchema = new Schema(
         firstName: String,
         lastName: String,
         step: { type: Number, default: 1 }, // تغییر به default = 1
-
+        // 🔥 فیلدهای آدرس جدید
+        provinceText: String,
+        cityText: String,
+        postalAddress: String,
+        postalCode: String,
         name: String,
         gender: { type: String, enum: ["male", "female"] },
         age: Number,
@@ -24,13 +28,13 @@ const userSchema = new Schema(
             slot2: { type: String, default: null },
             slot3: { type: String, default: null },
         },
-        likes: { type: [Number], default: [] }, // کاربرانی که این کاربر لایک کرده
-        likedBy: { type: [Number], default: [] }, // کاربرانی که این کاربر را لایک کردند
-        matches: { type: [Number], default: [] }, // کاربرانی که Match شده اند
+
+
+
         pendingRequests: { type: [Number], default: [] }, // درخواست‌هایی که کاربر باید قبول کند
-        likesRemaining: { type: Number, default: 10 }, // تعداد لایک‌های باقی‌مانده
-        isPremium: { type: Boolean, default: false },  // آیا کاربر عضویت ویژه دارد؟
-        premiumUntil: { type: Date, default: null },   // تاریخ پایان عضویت ویژه
+
+
+
 
         bio: { type: String, default: "" },
         interests: { type: [String], default: [] },

@@ -27,7 +27,7 @@ bot.start(startHandler()); // اینجا هندلر استارت جدید
 
 // ---- Callback ها برای مراحل ثبت پروفایل ----
 bot.action(/^(gender_|profile_province_|profile_city_)/, callbackHandler());
-bot.action(["edit_photos", "edit_profile", "terms", "upload_photos"], callbackHandler());
+bot.action(["edit_photos", "edit_profile", "address", "upload_photos"], callbackHandler());
 bot.action(["photo_slot_1", "photo_slot_2", "photo_slot_3", "back_to_photo_menu"], setPhotoSlotHandler());
 // ---- آپلود عکس ----
 // bot.on("photo", photoUploadHandler());
@@ -650,6 +650,35 @@ bot.on("text", async (ctx) => {
     const user = await User.findOne({ telegramId: ctx.from.id });
     if (!user) return;
 
+    // ---- مدیریت مراحل آدرس ----
+    if (user.step === "address_province") {
+        user.provinceText = ctx.message.text.trim();
+        user.step = "address_city";
+        await user.save();
+        return ctx.reply("🏙 لطفاً نام شهر خود را وارد کنید:");
+    }
+
+    if (user.step === "address_city") {
+        user.cityText = ctx.message.text.trim();
+        user.step = "address_postal_address";
+        await user.save();
+        return ctx.reply("📍 لطفاً آدرس پستی دقیق خود را وارد کنید:");
+    }
+
+    if (user.step === "address_postal_address") {
+        user.postalAddress = ctx.message.text.trim();
+        user.step = "address_postal_code";
+        await user.save();
+        return ctx.reply("🔢 لطفاً کد پستی خود را وارد کنید:");
+    }
+
+    if (user.step === "address_postal_code") {
+        user.postalCode = ctx.message.text.trim();
+        user.step = null;
+        await user.save();
+        return ctx.reply("✅ اطلاعات آدرس شما با موفقیت ذخیره شد!");
+    }
+
     const state = editState.get(ctx.from.id);
     if (state) {
         // ویرایش بخش پروفایل
@@ -803,58 +832,7 @@ bot.action("edit_personal", async (ctx) => {
 
 // commands
 
-// bot.command("show_profile", async (ctx) => {
-//     const chatWith = activeChats.get(ctx.from.id);
-//     if (chatWith) {
-//         return ctx.reply("❌ شما در حال حاضر در یک چت فعال هستید. برای دسترسی به پروفایل ابتدا چت را قطع کنید.");
-//     }
 
-//     await connectDB();
-//     const user = await User.findOne({ telegramId: ctx.from.id });
-//     if (!user) return ctx.reply("❌ پروفایل پیدا نشد");
-
-//     const urls = Object.values(user.photos).filter(Boolean) as string[];
-//     if (urls.length > 0) {
-//         const media: InputMediaPhoto<string>[] = urls.map((url, idx) => ({
-//             type: "photo",
-//             media: url,
-//             caption: idx === 0 ? "📸 عکس‌های شما" : undefined,
-//         }));
-//         await ctx.replyWithMediaGroup(media);
-//     }
-
-//     let profileText = `
-// 👤 پروفایل شما:
-// 📝 نام: ${user.name || "-"}
-// 🚻 جنسیت: ${user.gender || "-"}
-// 🎂 سن: ${user.age || "-"}
-// 📍 استان: ${provinces[user.province] || "-"}
-// 🏙 شهر:  ${cities[user.province][user.city] || "-"}
-// ❤️ لایک‌های باقی‌مانده: ${user.isPremium ? "نامحدود" : user.likesRemaining}
-// `;
-
-//     profileText += `📝 درباره من\n${user.bio || "مشخص نشده"}\n\n`;
-//     profileText += `🔎 دنبال چی هستم\n${user.lookingFor || "مشخص نشده"}\n\n`;
-//     if (user.interests && user.interests.length > 0) {
-//         profileText += `🍿 علایق و سرگرمی‌ها\n${user.interests.join("، ")}\n\n`;
-//     } else {
-//         profileText += `🍿 علایق و سرگرمی‌ها\nمشخص نشده\n\n`;
-//     }
-
-//     const buttons = [
-//         [{ text: "🖼 ویرایش عکس‌ها", callback_data: "edit_photos" }],
-//         [{ text: "✏️ ویرایش پروفایل", callback_data: "edit_profile" }],
-//         [{ text: "🔍 جستجو بر اساس استان", callback_data: "search_by_province" }],
-//         [{ text: "🎲 جستجوی تصادفی", callback_data: "search_random" }],
-//         [{ text: "💌 کسانی که مرا لایک کردند", callback_data: "liked_by_me" }],
-//     ];
-
-//     if (!user.isPremium) {
-//         buttons.push([{ text: "⭐️ عضویت ویژه", callback_data: "buy_premium" }]);
-//     }
-
-//     return ctx.reply(profileText, { reply_markup: { inline_keyboard: buttons } });
-// });
 // استفاده در command
 bot.command("show_profile", async (ctx) => {
     const chatWith = activeChats.get(ctx.from.id);
@@ -868,6 +846,7 @@ bot.action("show_profile", async (ctx) => {
     if (chatWith) return ctx.reply("❌ ابتدا چت فعال را قطع کنید.");
     await sendProfile(ctx);
 });
+
 bot.command("search_random", async (ctx) => {
     const chatWith = activeChats.get(ctx.from.id);
     if (chatWith) return ctx.reply("❌ ابتدا چت فعال را قطع کنید.");

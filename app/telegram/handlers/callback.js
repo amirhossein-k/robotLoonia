@@ -39,15 +39,15 @@ export function callbackHandler() {
     if (data === "edit_profile") {
       return ctx.reply("کدوم بخش رو میخوای ویرایش کنی؟", {
         reply_markup: {
-          inline_keyboard: [
-            [{ text: "ℹ️ بیشتر درباره من", callback_data: "edit_about" }],
-            [{ text: "👤 شخصی", callback_data: "edit_personal" }],
-            [{ text: "❤️ علایق", callback_data: "edit_interests" }],
-            [{ text: "🔍 به دنبال", callback_data: "edit_searching" }],
-            [{ text: "⬅️ بازگشت", callback_data: "show_profile" }],
-          ],
+          inline_keyboard: [[{ text: "ادرس", callback_data: "address" }]],
         },
       });
+    }
+
+    if (data === "address") {
+      user.step = "address_province";
+      await user.save();
+      return ctx.reply("🗺 لطفاً نام استان خود را وارد کنید:");
     }
 
     // قوانین
@@ -70,16 +70,6 @@ export function callbackHandler() {
           ],
         },
       });
-    }
-
-    // مرحله ۲: انتخاب جنسیت
-    if (data.startsWith("gender_") && user?.step === 2) {
-      user.gender = data === "gender_male" ? "male" : "female"; // تغییر به انگلیسی
-      user.step = 3;
-      await user.save();
-
-      await ctx.answerCbQuery();
-      return ctx.reply("📌 مرحله ۳ از ۵: سنت رو وارد کن (عدد):");
     }
 
     // مرحله ۴: انتخاب استان
