@@ -619,8 +619,33 @@ bot.on("text", async (ctx) => {
         user.postalCode = ctx.message.text.trim();
         user.step = "6"; // یا هر step که نشان‌دهنده تکمیل باشد (مثلاً برگشت به پروفایل کامل)
         await user.save();
+        const profileText = `
+        ✅ اطلاعات آدرس شما با موفقیت ذخیره شد!
+        👤 پروفایل شما:
+        📝 نام: ${user.name || "-"}
+        📍 استان: ${user.provinceText || "-"}
+        🏙 شهر:  ${user.cityText || "-"}
+        ادرس پستی :  ${user.postalAddress || "-"}
+        کد پستی :  ${user.postalCode || "-"}
+
+        `;
+        const buttons = [
+            [{ text: "پروفایل", callback_data: "edit_photos" }],
+            [{ text: "✏️ ویرایش ادرس", callback_data: "edit_profile" }],
+            [{ text: "محصولات", callback_data: "show_product" }],
+            [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
+            [{ text: "ادرس", callback_data: "address" }],
+            [
+                {
+                    text: "دسته بندی",
+                    callback_data: "category",
+                },
+            ],
+        ];
         console.log(`[DEBUG] Postal code set: ${user.postalCode}, address completed`);
-        return ctx.reply("✅ اطلاعات آدرس شما با موفقیت ذخیره شد!");
+        await ctx.reply(profileText, { reply_markup: { inline_keyboard: buttons } });
+
+
     }
 
     const state = editState.get(ctx.from.id);
