@@ -8,7 +8,7 @@ export function startHandler() {
 
     let user = await User.findOne({ telegramId: ctx.from.id });
     // اگر کاربر وجود داره و پروفایل کامل کرده
-    if (user && user.step >= "6") {
+    if (user && user.profileSet >= "6") {
       if (user.name === ADMIN_PHONE) {
         await ctx.reply("📋 پنل مدیریت:", {
           reply_markup: {
@@ -46,12 +46,12 @@ export function startHandler() {
     if (!user) {
       user = await User.create({
         telegramId: ctx.from.id,
-        step: "1",
+        profileSet: "1",
       });
     } else {
       // اگر اسم یا مرحله اولیه هنوز تکمیل نشده، فقط همین را ریست کن
-      if (!user.name || user.step < "1") {
-        user.step = "1";
+      if (!user.name || user.profileSet < "1") {
+        user.profileSet = "1";
         await user.save();
       } else {
         // پروفایل ناقص ولی اسم دارد → مرحله بعد یا پیام منو بده

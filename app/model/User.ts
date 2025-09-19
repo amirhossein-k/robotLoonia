@@ -9,6 +9,7 @@ const userSchema = new Schema(
         firstName: String,
         lastName: String,
         step: { type: String, default: "1" }, // تغییر به default = 1
+        profileSet: { type: String, default: "1" },
         // 🔥 فیلدهای آدرس جدید
         provinceText: String,
         cityText: String,

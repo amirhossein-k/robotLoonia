@@ -21,7 +21,7 @@ export function setPhotoSlotHandler() {
             if (!user) {
                 user = await User.create({
                     telegramId: ctx.from.id,
-                    step: 1,
+                    profileSet: 1,
                 });
             }
             // وضع انتظار برای آپلود را در دیتابیس ذخیره کن
