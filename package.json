@@ -1,0 +1,36 @@
+{
+  "name": "telegram-bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.887.0",
+    "dotenv": "^17.2.2",
+    "mongodb": "^6.19.0",
+    "mongoose": "^8.18.1",
+    "next": "15.5.3",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "telegraf": "^4.16.3",
+    "telegraf-session-local": "^2.1.1",
+    "telegraf-session-mongo": "^1.1.1",
+    "telegraf-session-mongodb": "^2.0.2",
+    "typegram": "^5.2.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
+  }
+}
