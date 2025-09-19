@@ -595,6 +595,7 @@ bot.on("text", async (ctx) => {
         user.provinceText = ctx.message.text.trim();
         user.step = "address_city";
         await user.save();
+        console.log(`[DEBUG] Province set: ${user.provinceText}, step to address_city`);
         return ctx.reply("🏙 لطفاً نام شهر خود را وارد کنید:");
     }
 
@@ -602,6 +603,7 @@ bot.on("text", async (ctx) => {
         user.cityText = ctx.message.text.trim();
         user.step = "address_postal_address";
         await user.save();
+        console.log(`[DEBUG] City set: ${user.cityText}, step to address_postal_address`);
         return ctx.reply("📍 لطفاً آدرس پستی دقیق خود را وارد کنید:");
     }
 
@@ -609,12 +611,15 @@ bot.on("text", async (ctx) => {
         user.postalAddress = ctx.message.text.trim();
         user.step = "address_postal_code";
         await user.save();
+        console.log(`[DEBUG] Postal address set: ${user.postalAddress}, step to address_postal_code`);
         return ctx.reply("🔢 لطفاً کد پستی خود را وارد کنید:");
     }
 
     if (user.step === "address_postal_code") {
         user.postalCode = ctx.message.text.trim();
+        user.step = 6; // یا هر step که نشان‌دهنده تکمیل باشد (مثلاً برگشت به پروفایل کامل)
         await user.save();
+        console.log(`[DEBUG] Postal code set: ${user.postalCode}, address completed`);
         return ctx.reply("✅ اطلاعات آدرس شما با موفقیت ذخیره شد!");
     }
 

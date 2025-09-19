@@ -22,8 +22,14 @@ export function callbackHandler() {
 
     await connectDB();
     const user = await User.findOne({ telegramId: ctx.from.id });
+    if (!user) {
+      console.error(`[DEBUG] User not found for ID: ${ctx.from.id}`);
+      return ctx.reply("❌ پروفایل شما پیدا نشد. لطفاً دوباره /start بزنید.");
+    }
 
+    console.log(`[DEBUG] Callback data received: ${data}`); // برای دیباگ: چک کنید در کنسول سرور ظاهر شود
     if (data === "edit_photos") {
+      await ctx.answerCbQuery(); // اضافه شده برای پاسخ سریع
       return ctx.reply("کدوم عکس رو میخوای تغییر بدی؟", {
         reply_markup: {
           inline_keyboard: [
@@ -37,6 +43,7 @@ export function callbackHandler() {
     }
 
     if (data === "edit_profile") {
+      await ctx.answerCbQuery(); // اضافه شده
       return ctx.reply("کدوم بخش رو میخوای ویرایش کنی؟", {
         reply_markup: {
           inline_keyboard: [[{ text: "ادرس", callback_data: "address" }]],
@@ -45,8 +52,12 @@ export function callbackHandler() {
     }
 
     if (data === "address") {
+      await ctx.answerCbQuery(); // 🔴 اضافه شده: این خط مشکل اصلی را حل می‌کند (پاسخ به callback)
       user.step = "address_province";
       await user.save();
+      console.log(
+        `[DEBUG] Set step to address_province for user ${ctx.from.id}`
+      );
       return ctx.reply("🗺 لطفاً نام استان خود را وارد کنید:");
     }
 
