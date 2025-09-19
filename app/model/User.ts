@@ -35,10 +35,7 @@ const userSchema = new Schema(
         },
 
         pendingRequests: { type: [Number], default: [] }, // درخواست‌هایی که کاربر باید قبول کند
-        bio: { type: String, default: "" },
-        interests: { type: [String], default: [] },
 
-        lookingFor: { type: String, default: "" },
     },
     { timestamps: true }
 );

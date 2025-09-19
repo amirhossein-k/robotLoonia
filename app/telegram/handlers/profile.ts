@@ -43,24 +43,26 @@ export function profileHandler() {
                                 ],
                             },
                         });
+                    } else {
+
+
+                        return ctx.reply("مرسی که ما را انتخاب کردی برای دیدن محصولات روی دکمه مربوط به ان کلیک کن", {
+                            reply_markup: {
+                                inline_keyboard: [
+                                    [{ text: "محصولات", callback_data: "show_product" }],
+                                    [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
+                                    [{ text: "ادرس", callback_data: "edit_profile" }],
+                                    [
+                                        {
+                                            text: "دسته بندی",
+                                            callback_data: "category",
+                                        },
+                                    ],
+                                ]
+                            }
+                        })
                     }
 
-
-                    return ctx.reply("مرسی که ما را انتخاب کردی برای دیدن محصولات روی دکمه مربوط به ان کلیک کن", {
-                        reply_markup: {
-                            inline_keyboard: [
-                                [{ text: "محصولات", callback_data: "show_product" }],
-                                [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
-                                [{ text: "ادرس", callback_data: "edit_profile" }],
-                                [
-                                    {
-                                        text: "دسته بندی",
-                                        callback_data: "category",
-                                    },
-                                ],
-                            ]
-                        }
-                    })
                 }
                 break
 
