@@ -1,5 +1,6 @@
 // app/handlers/photoHandler.ts
 import { connectDB } from "@/app/lib/mongodb";
+import product from "@/app/model/product";
 import User from "@/app/model/User";
 
 const userPhotoState = new Map<number, string>(); // userId → slot (slot1, slot2, slot3)
@@ -64,7 +65,26 @@ export function photoUploadHandler() {
             await connectDB();
             const user = await User.findOne({ telegramId: ctx.from.id });
             if (!user) return ctx.reply("❌ لطفاً ابتدا پروفایل خود را ایجاد کنید.");
+
             console.log("👉 photoUploadHandler triggered for", ctx.from.id);
+            if (user.step === "add_product_photo") {
+                const fileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
+
+                const newProduct = await product.create({
+                    title: user.tempProduct.title,
+                    description: user.tempProduct.description,
+                    price: user.tempProduct.price,
+                    size: user.tempProduct.size,
+                    photo: fileId,
+                });
+
+                user.step = "done";
+                user.tempProduct = undefined;
+                await user.save();
+
+                return ctx.reply(`✅ محصول "${newProduct.title}" با موفقیت اضافه شد!`);
+            }
+
 
             const slot = user.awaitingPhotoSlot;
             if (!slot) {

@@ -1,5 +1,6 @@
 import { connectDB } from "@/app/lib/mongodb";
 import User from "@/app/model/User";
+export const ADMIN_PHONE = "09391470427";
 
 export function startHandler() {
   return async (ctx) => {
@@ -8,6 +9,18 @@ export function startHandler() {
     let user = await User.findOne({ telegramId: ctx.from.id });
     // اگر کاربر وجود داره و پروفایل کامل کرده
     if (user && user.step >= "6") {
+      if (user.name === ADMIN_PHONE) {
+        await ctx.reply("📋 پنل مدیریت:", {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "➕ افزودن محصول", callback_data: "admin_add_product" }],
+              [{ text: "📦 لیست محصولات", callback_data: "list_products" }],
+              [{ text: "🛒 لیست سفارشات", callback_data: "admin_orders" }],
+            ],
+          },
+        });
+      }
+
       return ctx.telegram.sendMessage(
         ctx.chat.id,
         `👋 خوش برگشتی ${user.name}`,

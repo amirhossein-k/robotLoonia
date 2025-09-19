@@ -631,10 +631,9 @@ bot.on("text", async (ctx) => {
         `;
         const buttons = [
             [{ text: "پروفایل", callback_data: "edit_photos" }],
-            [{ text: "✏️ ویرایش ادرس", callback_data: "edit_profile" }],
-            [{ text: "محصولات", callback_data: "show_product" }],
+            [{ text: "✏️ ویرایش ادرس", callback_data: "address" }],
+            [{ text: "محصولات", callback_data: "list_products" }],
             [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
-            [{ text: "ادرس", callback_data: "address" }],
             [
                 {
                     text: "دسته بندی",
@@ -647,6 +646,38 @@ bot.on("text", async (ctx) => {
 
 
     }
+
+    // add prodcut by admin
+    // 🛠 مراحل افزودن محصول (فقط مدیر)
+    if (user.step === "add_product_title") {
+        user.tempProduct = { title: ctx.message.text };
+        user.step = "add_product_description";
+        await user.save();
+        return ctx.reply("📝 توضیح محصول را وارد کنید:");
+    }
+
+    if (user.step === "add_product_description") {
+        user.tempProduct.description = ctx.message.text;
+        user.step = "add_product_price";
+        await user.save();
+        return ctx.reply("💰 قیمت محصول را وارد کنید:");
+    }
+
+    if (user.step === "add_product_price") {
+        user.tempProduct.price = ctx.message.text;
+        user.step = "add_product_size";
+        await user.save();
+        return ctx.reply("📏 اندازه محصول را وارد کنید:");
+    }
+
+    if (user.step === "add_product_size") {
+        user.tempProduct.size = ctx.message.text;
+        user.step = "add_product_photo";
+        await user.save();
+        return ctx.reply("📸 لطفاً عکس محصول را ارسال کنید:");
+    }
+
+    // 
 
     const state = editState.get(ctx.from.id);
     if (state) {
