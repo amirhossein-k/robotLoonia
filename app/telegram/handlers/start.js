@@ -10,7 +10,8 @@ export function startHandler() {
     // اگر کاربر وجود داره و پروفایل کامل کرده
     if (user && user.profileSet >= "6") {
       if (user.name === ADMIN_PHONE) {
-        await ctx.reply("📋 پنل مدیریت:", {
+        // فقط پنل مدیریت برای ادمین
+        return await ctx.reply("📋 پنل مدیریت:", {
           reply_markup: {
             inline_keyboard: [
               [{ text: "➕ افزودن محصول", callback_data: "admin_add_product" }],
@@ -19,27 +20,26 @@ export function startHandler() {
             ],
           },
         });
-      } else {
-        return ctx.telegram.sendMessage(
-          ctx.chat.id,
-          `👋 خوش برگشتی ${user.name}`,
-          {
-            reply_markup: {
-              inline_keyboard: [
-                [{ text: "محصولات", callback_data: "show_product" }],
-                [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
-                [{ text: "ادرس", callback_data: "address" }],
-                [
-                  {
-                    text: "دسته بندی",
-                    callback_data: "category",
-                  },
-                ],
-              ],
-            },
-          }
-        );
       }
+      return ctx.telegram.sendMessage(
+        ctx.chat.id,
+        `👋 خوش برگشتی ${user.name}`,
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "محصولات", callback_data: "show_product" }],
+              [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
+              [{ text: "ادرس", callback_data: "address" }],
+              [
+                {
+                  text: "دسته بندی",
+                  callback_data: "category",
+                },
+              ],
+            ],
+          },
+        }
+      );
     }
     // اگر کاربر جدید بود یا پروفایل ناقص داشت → مرحله ۱
     // اگر کاربر جدید است
