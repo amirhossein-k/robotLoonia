@@ -592,23 +592,6 @@ setInterval(async () => {
     }
 }, 2 * 60 * 1000); // هر 2 دقیقه
 
-// bot.action(/^(edit_about|edit_searching|edit_interests)$/, async (ctx) => {
-//     await connectDB();
-//     const user = await User.findOne({ telegramId: ctx.from.id });
-//     if (!user) return ctx.reply("❌ پروفایل پیدا نشد");
-
-//     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//     if ((ctx.callbackQuery as any).data === "edit_about") {
-//         await ctx.reply("✏️ لطفاً متن جدید بخش 'درباره من' را وارد کنید:");
-//         // حالا باید هندلر پیام بعدی این متن را ذخیره کند
-//     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//     } else if ((ctx.callbackQuery as any).data === "edit_searching") {
-//         await ctx.reply("🔎 لطفاً متن جدید بخش 'دنبال چی هستم' را وارد کنید:");
-//     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//     } else if ((ctx.callbackQuery as any).data === "edit_interests") {
-//         await ctx.reply("🍿 لطفاً علایق و سرگرمی‌های خود را وارد کنید (با ویرگول جدا کنید):");
-//     }
-// });
 bot.action(/^(edit_name|edit_age|edit_about|edit_searching|edit_interests)$/, async (ctx) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data = (ctx.callbackQuery as any).data;
