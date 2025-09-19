@@ -1,10 +1,7 @@
 // app\telegram\handlers\callback.js
 import { connectDB } from "@/app/lib/mongodb";
 import User from "@/app/model/User";
-import { getCityKeyboard } from "@/app/lib/cities";
 import { searchHandler } from "./searchHandler";
-import { cities } from "@/app/lib/cities";
-import { provinces } from "@/app/lib/provinces";
 import { activeChats } from "../bot";
 import { productsHandler, userProductPage } from "./products";
 import Order from "@/app/model/Order";
@@ -69,14 +66,6 @@ export function callbackHandler() {
       }
     }
 
-    // قوانین
-    if (data === "terms") {
-      await ctx.answerCbQuery();
-      return ctx.reply(
-        "📜 قوانین استفاده از ربات:\n\n1️⃣ احترام به سایر کاربران الزامی است.\n2️⃣ محتوای نامناسب مجاز نیست.\n3️⃣ تخلف باعث مسدود شدن می‌شود.\n\n✅ با ادامه استفاده، شما قوانین را پذیرفته‌اید."
-      );
-    }
-
     // دکمه آپلود عکس
     if (data === "upload_photos") {
       await ctx.answerCbQuery();
@@ -91,60 +80,6 @@ export function callbackHandler() {
       });
     }
 
-    // مرحله ۴: انتخاب استان
-    if (
-      ctx.callbackQuery?.data.startsWith("profile_province_") &&
-      user?.step === "4"
-    ) {
-      const provinceKey = data.replace("profile_province_", "");
-      user.province = provinceKey;
-      user.step = "5";
-      await user.save();
-
-      await ctx.answerCbQuery();
-      return ctx.reply(
-        "📌 مرحله ۵ از ۵: شهرت رو انتخاب کن:",
-        getCityKeyboard(provinceKey)
-      );
-    }
-
-    // مرحله ۵: انتخاب شهر
-    if (data.startsWith("profile_city_") && user?.step === 5) {
-      const parts = data.split("_");
-      // حذف profile و city → مابقی میشه [provinceKey..., cityKey]
-      const provinceAndCity = parts.slice(2);
-      const provinceCode = provinceAndCity.slice(0, -1).join("_"); // همه‌ی بخش‌ها به جز آخری
-      const cityCode = provinceAndCity.slice(-1)[0]; // آخرین بخش = شهر
-
-      user.province = provinceCode;
-      user.city = cityCode;
-      user.step = "6"; // پروفایل تکمیل شد
-      await user.save();
-      const genderText =
-        user.gender === "male" ? "مرد" : user.gender === "female" ? "زن" : "-";
-
-      ctx.answerCbQuery("✅ شهرت انتخاب شد!").catch(() => {});
-      return ctx.reply(
-        `✅ پروفایلت ساخته شد!\n\n👤 نام: ${
-          user.name
-        }\n👫 جنسیت: ${genderText}\n🎂 سن: ${user.age}\n📍 استان: ${
-          provinces[user.province]
-        }\n🏙 شهر: ${cities[user.province][user.city]}`,
-
-        {
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: "📜 شرایط استفاده", callback_data: "terms" }],
-              // [{ text: "📸 آپلود عکس", callback_data: "upload_photos" }],
-              [{ text: "پروفایل", callback_data: "show_profile" }],
-            ],
-          },
-        }
-      );
-    }
-    if (data === "search_profiles") {
-      return searchHandler(ctx);
-    }
     // next و like
     if (data === "next_profile") {
       const index = userSearchIndex.get(ctx.from.id) || 0;

@@ -29,6 +29,21 @@ bot.start(startHandler()); // اینجا هندلر استارت جدید
 bot.action(/^(gender_|profile_province_|profile_city_)/, callbackHandler());
 bot.action(["edit_photos", "edit_profile", "address", "upload_photos"], callbackHandler());
 bot.action(["photo_slot_1", "photo_slot_2", "photo_slot_3", "back_to_photo_menu"], setPhotoSlotHandler());
+bot.action([
+    "edit_photos",
+    "edit_profile",
+    "address",
+    "upload_photos",
+    "list_products",
+    "next_products",
+    "prev_products",
+    "admin_add_product",
+    "admin_orders",
+    "orders_pending",
+    "orders_approved"
+], callbackHandler());
+// همچنین برای دکمه‌هایی که dynamic هستن:
+bot.action(/^(order_|approve_|reject_|chat_)\w+/, callbackHandler());
 // ---- آپلود عکس ----
 // bot.on("photo", photoUploadHandler());
 // ---- نمایش پروفایل شخصی ----
@@ -122,111 +137,6 @@ bot.action("search_by_province", async (ctx) => {
         getProvinceKeyboard(true)
     );
 });
-bot.action(/search_province_.+/, async (ctx) => {
-    const chatWith = activeChats.get(ctx.from.id);
-    if (chatWith) {
-        return ctx.reply("❌ شما در حال حاضر در یک چت فعال هستید. برای دسترسی به پروفایل ابتدا چت را قطع کنید.");
-    }
-    await connectDB();
-    const user = await User.findOne({ telegramId: ctx.from.id });
-    if (!user) return ctx.reply("❌ پروفایل پیدا نشد");
-
-    // گرفتن نام استان از callback_data
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // گرفتن نام استان از callback_data
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const provinceKey = (ctx.callbackQuery as any).data.replace("search_province_", "");
-    const provinceLabel = provinces[provinceKey] || provinceKey;
-    await ctx.answerCbQuery();
-
-    // اول شهرها رو نشون بده
-    await ctx.reply(
-        `🏙 شهر مورد نظر در استان "${provinceLabel}" را انتخاب کن:`,
-        getCityKeyboard(provinceKey, true)
-    );
-
-    // بعد نتایج رو آماده کن
-    // const results = await User.find({
-    //     province: provinceKey,
-    //     telegramId: { $ne: user.telegramId },
-    //     step: { $gte: 6 },
-    // });
-
-    // if (!results.length) {
-    //     return ctx.reply(`❌ هیچ پروفایلی در استان "${provinceLabel}" یافت نشد.`);
-    // }
-
-    // // ذخیره نتایج برای نمایش مرحله‌ای
-    // userSearchResults.set(user.telegramId, results);
-    // userSearchIndex.set(user.telegramId, 0);
-
-    // await ctx.reply(`✅ ${results.length} پروفایل در استان "${provinceLabel}" پیدا شد.`);
-    // await searchHandler(ctx); // نمایش اولین پروفایل
-});
-bot.action(/search_city_.+/, async (ctx) => {
-    const chatWith = activeChats.get(ctx.from.id);
-    if (chatWith) {
-        return ctx.reply("❌ شما در حال حاضر در یک چت فعال هستید. برای دسترسی به پروفایل ابتدا چت را قطع کنید.");
-    }
-    await connectDB();
-    const user = await User.findOne({ telegramId: ctx.from.id });
-    if (!user) return ctx.reply("❌ پروفایل پیدا نشد");
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const parts = (ctx.callbackQuery as any).data.split("_");
-    const provinceKey = parts[2]; // مثلا tehran
-    const cityCode = parts[3];    // مثلا varamin
-    const cityLabel = cities[provinceKey]?.[cityCode] || cityCode;
-
-    await ctx.answerCbQuery("✅ شهر انتخاب شد!");
-
-    // کاربرهای همان شهر
-    const results = await User.find({
-        province: provinceKey,
-        city: cityCode,
-        gender: user.gender === "female" ? "male" : "female",
-
-        telegramId: { $ne: user.telegramId },
-        step: { $gte: 6 },
-    });
-
-
-    if (!results.length) {
-        return ctx.reply(`❌ هیچ پروفایلی در شهر "${cityCode}" پیدا نشد.`);
-    }
-
-    userSearchResults.set(user.telegramId, results);
-    userSearchIndex.set(user.telegramId, 0);
-
-    await ctx.reply(`✅ ${results.length} پروفایل در شهر "${cityLabel}" پیدا شد.`);
-    await searchHandler(ctx); // نمایش اولین پروفایل
-});
-
-
-bot.action("search_random", async (ctx) => {
-    const chatWith = activeChats.get(ctx.from.id);
-    if (chatWith) {
-        return ctx.reply("❌ شما در حال حاضر در یک چت فعال هستید. برای دسترسی به پروفایل ابتدا چت را قطع کنید.");
-    }
-    await connectDB();
-    const user = await User.findOne({ telegramId: ctx.from.id });
-    if (!user) return ctx.reply("❌ پروفایل پیدا نشد");
-
-    // فقط کاربران با جنسیت مخالف و پروفایل کامل
-    const allUsers = await User.find({
-        telegramId: { $ne: user.telegramId },
-        step: { $gte: 6 },
-        gender: user.gender === "female" ? "male" : "female",
-    });
-    if (!allUsers.length) return ctx.reply("❌ هیچ پروفایلی برای نمایش نیست.");
-
-    // انتخاب تصادفی
-    const shuffled = allUsers.sort(() => 0.5 - Math.random());
-    userSearchResults.set(user.telegramId, shuffled);
-    userSearchIndex.set(user.telegramId, 0);
-
-    await searchHandler(ctx); // نمایش اولین پروفایل
-});
 
 
 bot.action("buy_premium", async (ctx) => {
@@ -244,25 +154,7 @@ bot.action("buy_premium", async (ctx) => {
 });
 
 
-// دکمه بعدی پروفایل در جستجو
-// ---- پروفایل بعدی در جستجو ----
-bot.action("next_profile", async (ctx) => {
-    const chatWith = activeChats.get(ctx.from.id);
-    if (chatWith) {
-        return ctx.reply("❌ شما در حال حاضر در یک چت فعال هستید. برای دسترسی به پروفایل ابتدا چت را قطع کنید.");
-    }
-    await connectDB();
-    const user = await User.findOne({ telegramId: ctx.from.id });
-    if (!user) return ctx.reply("❌ پروفایل پیدا نشد");
 
-    const results = userSearchResults.get(user.telegramId) || [];
-    if (!results.length) return ctx.reply("❌ هیچ پروفایلی برای نمایش نیست.");
-
-    let index = userSearchIndex.get(user.telegramId) || 0;
-    index = (index + 1) % results.length;
-    userSearchIndex.set(user.telegramId, index);
-    await searchHandler(ctx);
-});;
 
 // ---- لایک کاربر ----
 bot.action(/like_\d+/, async (ctx) => {
@@ -342,32 +234,7 @@ bot.action(/like_\d+/, async (ctx) => {
         await ctx.reply("✅ لایک ثبت شد!");
     }
 });
-// ---- مشاهده کسانی که شما را لایک کردند ----
-bot.action("liked_by_me", async (ctx) => {
-    const chatWith = activeChats.get(ctx.from.id);
-    if (chatWith) {
-        return ctx.reply("❌ شما در حال حاضر در یک چت فعال هستید. برای دسترسی به پروفایل ابتدا چت را قطع کنید.");
-    }
-    await connectDB();
-    const user = await User.findOne({ telegramId: ctx.from.id });
-    if (!user) return ctx.reply("❌ پروفایل پیدا نشد");
 
-    if (!user.likedBy.length) return ctx.reply("❌ کسی شما را لایک نکرده");
-
-    // ساخت دکمه‌ها برای هر کاربر
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const keyboard = [];
-    for (const id of user.likedBy) {
-        const u = await User.findOne({ telegramId: id });
-        if (u) {
-            keyboard.push([{ text: `👤 ${u.name}`, callback_data: `show_profile_${u.telegramId}` }]);
-        }
-    }
-
-    await ctx.reply("💌 کسانی که شما را لایک کردند:", {
-        reply_markup: { inline_keyboard: keyboard }
-    });
-});
 // ---- مشاهده پروفایل کاربر از دکمه ----
 bot.action(/show_profile_\d+/, async (ctx) => {
     const chatWith = activeChats.get(ctx.from.id);
@@ -455,9 +322,6 @@ bot.action(/start_chat_\d+/, async (ctx) => {
     await ctx.reply(`✅ شما با ${otherUser.name} وارد چت شدید.`, keyboard);
     await ctx.telegram.sendMessage(otherUser.telegramId, `✅ کاربر ${user.name} درخواست چت را قبول کرد.`, keyboard);
 });
-
-
-
 
 
 // دکمه قطع ارتباط
@@ -728,11 +592,8 @@ bot.on("text", async (ctx) => {
             to: chatWith,
             text: message,
             type: "text"
-
-
         });
-
-        // ارسال پیام به طرف مقابل
+        //ارسال پیام به طرف مقابل
         await ctx.telegram.sendMessage(chatWith, `💬 ${user.name}: ${message}`);
     } else {
         // پیام متنی (اسم، سن و ...)
@@ -754,20 +615,13 @@ bot.on("photo", async (ctx) => {
     const photo = ctx.message.photo[ctx.message.photo.length - 1];
     const fileId = photo.file_id;
     if (chatWith) {
-        // ذخیره در دیتابیس
-        // await Message.create({
-        //     from: user.telegramId,
-        //     to: chatWith || null,
-        //     fileId: fileId,
-        //     type: "photo",
-        // });
+
         await Message.create({
             from: user.telegramId,
             to: chatWith,
             fileId,
             type: "photo",
         });
-
 
         // ارسال به طرف مقابل
         await ctx.telegram.sendPhoto(chatWith, fileId, {
@@ -787,8 +641,6 @@ bot.on("photo", async (ctx) => {
 
     await ctx.telegram.sendPhoto(monitorId, fileId, { caption });
 });
-
-
 
 bot.action("edit_personal", async (ctx) => {
     const chatWith = activeChats.get(ctx.from.id);
@@ -811,60 +663,7 @@ bot.action("edit_personal", async (ctx) => {
 
 
 // استفاده در command
-bot.command("show_profile", async (ctx) => {
-    const chatWith = activeChats.get(ctx.from.id);
-    if (chatWith) return ctx.reply("❌ ابتدا چت فعال را قطع کنید.");
-    await sendProfile(ctx);
-});
 
-// استفاده در callback
-bot.action("show_profile", async (ctx) => {
-    const chatWith = activeChats.get(ctx.from.id);
-    if (chatWith) return ctx.reply("❌ ابتدا چت فعال را قطع کنید.");
-    await sendProfile(ctx);
-});
-
-bot.command("search_random", async (ctx) => {
-    const chatWith = activeChats.get(ctx.from.id);
-    if (chatWith) return ctx.reply("❌ ابتدا چت فعال را قطع کنید.");
-    await connectDB();
-    const user = await User.findOne({ telegramId: ctx.from.id });
-    if (!user) return ctx.reply("❌ پروفایل پیدا نشد");
-
-    const allUsers = await User.find({ telegramId: { $ne: user.telegramId } });
-    if (!allUsers.length) return ctx.reply("❌ هیچ پروفایلی برای نمایش نیست.");
-
-    const shuffled = allUsers.sort(() => 0.5 - Math.random());
-    userSearchResults.set(user.telegramId, shuffled);
-    userSearchIndex.set(user.telegramId, 0);
-
-    await searchHandler(ctx);
-});
-bot.command("liked_by_me", async (ctx) => {
-    const chatWith = activeChats.get(ctx.from.id);
-    if (chatWith) return ctx.reply("❌ ابتدا چت فعال را قطع کنید.");
-    await connectDB();
-    const user = await User.findOne({ telegramId: ctx.from.id });
-    if (!user) return ctx.reply("❌ پروفایل پیدا نشد");
-
-    if (!user.likedBy.length) return ctx.reply("❌ کسی شما را لایک نکرده");
-
-    const keyboard = [];
-    for (const id of user.likedBy) {
-        const u = await User.findOne({ telegramId: id });
-        if (u) keyboard.push([{ text: `👤 ${u.name}`, callback_data: `show_profile_${u.telegramId}` }]);
-    }
-
-    await ctx.reply("💌 کسانی که شما را لایک کردند:", { reply_markup: { inline_keyboard: keyboard } });
-});
-
-bot.command("buy_premium", async (ctx) => {
-    await ctx.reply("⭐️ عضویت ویژه\n\n✅ قیمت: 10,000 تومان\nبا خرید عضویت ویژه می‌توانید لایک نامحدود داشته باشید.", {
-        reply_markup: {
-            inline_keyboard: [[{ text: "💳 پرداخت", url: "https://your-payment-gateway.com/pay?amount=10000" }]]
-        }
-    });
-});
 bot.command("end_chat", async (ctx) => {
     const chatWith = activeChats.get(ctx.from.id);
     if (!chatWith) return ctx.reply("❌ شما در حال حاضر در چت فعال نیستید.");
@@ -877,21 +676,7 @@ bot.command("end_chat", async (ctx) => {
     activeChats.delete(chatWith);
     ctx.reply("❌ چت قطع شد.");
 });
-// bot.command("edit_profile", async (ctx) => {
-//     const chatWith = activeChats.get(ctx.from.id);
-//     if (chatWith) return ctx.reply("❌ ابتدا چت فعال را قطع کنید.");
-//     await ctx.reply("کدوم بخش رو میخوای ویرایش کنی؟", {
-//         reply_markup: {
-//             inline_keyboard: [
-//                 [{ text: "ℹ️ بیشتر درباره من", callback_data: "edit_about" }],
-//                 [{ text: "👤 شخصی", callback_data: "edit_personal" }],
-//                 [{ text: "❤️ علایق", callback_data: "edit_interests" }],
-//                 [{ text: "🔍 به دنبال", callback_data: "edit_searching" }],
-//                 [{ text: "⬅️ بازگشت", callback_data: "show_profile" }],
-//             ],
-//         },
-//     });
-// });
+
 export async function POST(req: Request) {
     try {
         const body = await req.json();
