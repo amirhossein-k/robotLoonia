@@ -81,8 +81,15 @@ export function photoUploadHandler() {
                 user.step = "done";
                 user.tempProduct = undefined;
                 await user.save();
-
-                return ctx.reply(`✅ محصول "${newProduct.title}" با موفقیت اضافه شد!`);
+                return await ctx.reply(`✅ محصول "${newProduct.title}" با موفقیت اضافه شد!\n\n📋 پنل مدیریت:`, {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: "➕ افزودن محصول", callback_data: "admin_add_product" }],
+                            [{ text: "📦 لیست محصولات", callback_data: "list_products" }],
+                            [{ text: "🛒 لیست سفارشات", callback_data: "admin_orders" }],
+                        ],
+                    },
+                });
             }
 
 
