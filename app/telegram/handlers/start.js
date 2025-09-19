@@ -44,7 +44,7 @@ export function startHandler() {
             inline_keyboard: [
               [{ text: "محصولات", callback_data: "show_product" }],
               [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
-              [{ text: "ادرس", callback_data: "edit_profile" }],
+              [{ text: "ادرس", callback_data: "address" }],
               [
                 {
                   text: "دسته بندی",
@@ -78,7 +78,7 @@ export function startHandler() {
               inline_keyboard: [
                 [{ text: "محصولات", callback_data: "show_product" }],
                 [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
-                [{ text: "ادرس", callback_data: "edit_profile" }],
+                [{ text: "ادرس", callback_data: "address" }],
                 [{ text: "دسته بندی", callback_data: "category" }],
               ],
             },
