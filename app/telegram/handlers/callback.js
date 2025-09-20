@@ -8,7 +8,6 @@ import Order from "@/app/model/Order";
 import Product from "@/app/model/product";
 import { ADMIN_PHONE } from "./start";
 import { productsCategoryHandler } from "@/app/telegram/handlers/categoryProduct";
-import Order from "@/app/model/Order";
 
 export function callbackHandler() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
