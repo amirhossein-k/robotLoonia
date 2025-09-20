@@ -4,7 +4,7 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface IOrder extends Document {
     productId: string;
     userId: string;
-    status: "pending" | "approved" | "rejected";
+    status: "pending" | "approved" | "payment_rejected" | "awaiting_payment" | "payment_review";
     paymentReceipt: string; // لینک عکس رسید
     createdAt: Date;
 }
@@ -12,8 +12,17 @@ export interface IOrder extends Document {
 const OrderSchema: Schema = new Schema({
     productId: { type: String, required: true },
     userId: { type: String, required: true },
-    status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
-    paymentReceipt: String,
+    status: {
+        type: String, enum: [
+            "pending",          // کاربر سفارش داده
+            "awaiting_payment", // تایید ادمین، منتظر پرداخت
+            "payment_review",   // کاربر رسید فرستاده، منتظر تایید
+            "approved",         // سفارش تایید شد
+            "payment_rejected", // رسید رد شد
+        ], default: "pending"
+    },
+    paymentReceipt: String,  // file_id عکس رسید
+    chatMode: { type: Boolean, default: false }, // گفتگو فعال است یا نه
     createdAt: { type: Date, default: Date.now },
 });
 

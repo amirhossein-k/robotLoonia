@@ -215,6 +215,23 @@ export function callbackHandler() {
       });
     }
 
+    if (data.startsWith("approve_order_")) {
+      const orderId = data.replace("approve_order_", "");
+      const order = await Order.findById(orderId);
+      if (!order) return;
+
+      order.status = "awaiting_payment";
+      await order.save();
+
+      // پیام به کاربر
+      await ctx.telegram.sendMessage(
+        order.userId,
+        "✅ سفارش شما تایید شد.\n💳 لطفا مبلغ را به شماره کارت 1234-5678-9012 واریز کنید و رسید را ارسال نمایید."
+      );
+
+      await ctx.reply("سفارش به حالت «منتظر پرداخت» تغییر یافت.");
+    }
+
     if (data === "orders_pending") {
       await connectDB();
       const orders = await Order.find({ status: "pending" });

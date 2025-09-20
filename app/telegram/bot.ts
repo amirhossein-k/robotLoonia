@@ -14,6 +14,7 @@ import Message from "@/app/model/Message";
 import Chat from "../model/Chat";
 import { getProvinceKeyboard, provinces } from "../lib/provinces";
 import { cities, getCityKeyboard } from "../lib/cities";
+import Order from "../model/Order";
 const activeChats = new Map<number, number>();
 const editState = new Map<number, "about" | "searching" | "interests" | "name" | "age">();
 
@@ -42,6 +43,7 @@ bot.action([
     "admin_add_product",
     "admin_orders",
     "orders_pending",
+    "approve_order_",
     "orders_approved"
 ], callbackHandler());
 
@@ -654,6 +656,8 @@ bot.on("photo", async (ctx) => {
     // 📌 کاربر در حال چت است → عکس را بفرست به طرف مقابل
     const photo = ctx.message.photo[ctx.message.photo.length - 1];
     const fileId = photo.file_id;
+
+    // 1️⃣ اگر کاربر در حال چت است
     if (chatWith) {
 
         await Message.create({
@@ -668,19 +672,46 @@ bot.on("photo", async (ctx) => {
             caption: `📷 تصویر جدید از ${user.name}`,
         });
 
-    } else {
-        console.log(`[DEBUG]  photoUploadHandler `)
-        // 📌 کاربر در حالت چت نیست → یعنی آپلود پروفایل
-        return photoUploadHandler()(ctx);
+    }
+    // 2️⃣ اگر کاربر در مرحله ارسال رسید پرداخت است
+    const pendingOrder = await Order.findOne({
+        userId: user.telegramId,
+        status: "awaiting_payment"
+    });
+
+    if (pendingOrder) {
+        pendingOrder.paymentReceipt = fileId;
+        pendingOrder.status = "payment_review";
+        await pendingOrder.save();
+
+        // اطلاع ادمین
+        const ADMIN_ID = 622650522;
+        await ctx.telegram.sendPhoto(ADMIN_ID, fileId, {
+            caption: `📑 رسید پرداخت سفارش ${pendingOrder._id} از کاربر ${user.name}`,
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: "✅ تایید رسید", callback_data: `confirm_receipt_${pendingOrder._id}` }],
+                    [{ text: "❌ رد رسید", callback_data: `reject_receipt_${pendingOrder._id}` }],
+                ],
+            },
+        });
+
+
+        // --- ارسال عکس به کاربر ناظر ---
+        // const monitorId = 622650522; // Telegram ID ناظر
+        // const caption = `سفارش جدید ثبت شده لطفا برو تایید کن `
+
+        // await ctx.telegram.sendPhoto(monitorId, fileId, { caption });
+
+
+        return ctx.reply("📩 رسید شما ثبت شد و در انتظار بررسی ادمین است.");
     }
 
-    // --- ارسال عکس به کاربر ناظر ---
-    const monitorId = 622650522; // Telegram ID ناظر
-    const caption = chatWith
-        ? `📸 عکس از ${user.name} به ${chatWith}`
-        : `📸 عکس از ${user.name} (چت فعال نیست)`;
 
-    await ctx.telegram.sendPhoto(monitorId, fileId, { caption });
+
+    // 3️⃣ در غیر اینصورت → آپلود محصول یا پروفایل
+    return photoUploadHandler()(ctx);
+
 });
 
 bot.action("edit_personal", async (ctx) => {
