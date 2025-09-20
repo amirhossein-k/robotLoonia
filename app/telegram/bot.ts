@@ -78,7 +78,7 @@ bot.action(/reject_product_(.+)/, async (ctx) => {
     await order.save();
     // ذخیره سفارش در حالت انتظار دلیل
     waitingForRejectReason.set(ctx.from.id.toString(), orderId);
-
+    console.log(`[DEBUG] ${waitingForRejectReason} - ذخیره سفارش در حالت انتظار دلیل`)
     await ctx.reply("لطفا دلیل رد کردن محصول را بنویسید:");
     await ctx.answerCbQuery("لطفا دلیل رد را وارد کنید.");
     // await ctx.telegram.sendMessage(order.userId.telegramId, `❌ محصول شما توسط ادمین رد شد.`);
@@ -527,11 +527,15 @@ bot.on("text", async (ctx) => {
     if (!user) return;
 
     const adminId = ctx.from.id.toString();
+    console.log(`[DEBUG] ${adminId} - adminId`)
     const orderId = waitingForRejectReason.get(adminId);
+    console.log(`[DEBUG] ${orderId} - orderId`)
     if (orderId) {
         // ادمین در حالت نوشتن دلیل رد محصول است
         const reason = ctx.message.text;
         const order = await Order.findById(orderId).populate("userId productId");
+        console.log(`[DEBUG] ${order} - order`)
+
         if (!order) return ctx.reply("❌ سفارش پیدا نشد.");
 
         order.status = "rejected";
