@@ -635,6 +635,7 @@ bot.on("photo", async (ctx) => {
         });
 
     } else {
+        console.log(`[DEBUG]  photoUploadHandler `)
         // 📌 کاربر در حالت چت نیست → یعنی آپلود پروفایل
         return photoUploadHandler()(ctx);
     }

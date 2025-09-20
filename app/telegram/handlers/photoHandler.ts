@@ -68,6 +68,7 @@ export function photoUploadHandler() {
 
             console.log("👉 photoUploadHandler triggered for", ctx.from.id);
             if (user.step === "add_product_photo") {
+                console.log(`[DEBUG]   add_product_photo`)
                 let fileId: string | undefined;
 
 
