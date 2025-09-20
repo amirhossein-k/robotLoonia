@@ -80,6 +80,8 @@ bot.action(/reject_product_(.+)/, async (ctx) => {
 // مرحله 5: ادمین تایید/رد فیش
 // ========================
 bot.action(/confirm_receipt_(.+)/, async (ctx) => {
+    await connectDB(); // 👈 حتما بزن
+
     const orderId = ctx.match[1];
     const order = await Order.findById(orderId).populate("userId productId");
     order.status = "approved";
@@ -94,6 +96,8 @@ bot.action(/confirm_receipt_(.+)/, async (ctx) => {
 });
 
 bot.action(/reject_receipt_(.+)/, async (ctx) => {
+    await connectDB(); // 👈 حتما بزن
+
     const orderId = ctx.match[1];
     const order = await Order.findById(orderId).populate("userId productId");
     order.status = "rejected";
@@ -655,6 +659,7 @@ bot.on("photo", async (ctx) => {
         await ctx.telegram.sendPhoto(chatWith, fileId, {
             caption: `📷 تصویر جدید از ${user.name}`,
         });
+        return; // 👈 اینجا return بزن
 
     }
     // ========================
