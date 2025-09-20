@@ -221,6 +221,8 @@ export function callbackHandler() {
     }
 
     if (data.startsWith("approve_product_")) {
+      await connectDB();
+
       const orderId = data.replace("approve_product_", "");
       const order = await Order.findById(orderId);
       if (!order) return;
