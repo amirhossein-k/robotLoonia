@@ -15,7 +15,7 @@ export function startHandler() {
           reply_markup: {
             inline_keyboard: [
               [{ text: "➕ افزودن محصول", callback_data: "admin_add_product" }],
-              [{ text: "📦 لیست محصولات", callback_data: "list_products" }],
+              [{ text: "📦 لیست محصولات", callback_data: "list" }],
               [{ text: "🛒 لیست سفارشات", callback_data: "admin_orders" }],
             ],
           },

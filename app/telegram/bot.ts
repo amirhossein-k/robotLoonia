@@ -496,7 +496,7 @@ bot.on("text", async (ctx) => {
         const buttons = [
             [{ text: "پروفایل", callback_data: "edit_photos" }],
             [{ text: "✏️ ویرایش ادرس", callback_data: "address" }],
-            [{ text: "محصولات", callback_data: "list_products" }],
+            [{ text: "محصولات", callback_data: "list" }],
             [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
             [
                 {
