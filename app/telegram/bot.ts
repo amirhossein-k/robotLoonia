@@ -18,6 +18,8 @@ import Order from "../model/Order";
 const activeChats = new Map<number, number>();
 const editState = new Map<number, "about" | "searching" | "interests" | "name" | "age">();
 
+// Map برای نگه داشتن حالت منتظر دلیل رد
+const waitingForRejectReason = new Map<string, string>();
 
 const bot = new Telegraf(process.env.BOT_TOKEN!);
 // ---- استارت و ثبت پروفایل ----
@@ -74,9 +76,13 @@ bot.action(/reject_product_(.+)/, async (ctx) => {
     const order = await Order.findById(orderId).populate("userId productId");
     order.status = "rejected";
     await order.save();
+    // ذخیره سفارش در حالت انتظار دلیل
+    waitingForRejectReason.set(ctx.from.id.toString(), orderId);
 
-    await ctx.telegram.sendMessage(order.userId.telegramId, `❌ محصول شما توسط ادمین رد شد.`);
-    await ctx.answerCbQuery("محصول رد شد.");
+    await ctx.reply("لطفا دلیل رد کردن محصول را بنویسید:");
+    await ctx.answerCbQuery("لطفا دلیل رد را وارد کنید.");
+    // await ctx.telegram.sendMessage(order.userId.telegramId, `❌ محصول شما توسط ادمین رد شد.`);
+    // await ctx.answerCbQuery("محصول رد شد.");
 });
 // ========================
 // مرحله 5: ادمین تایید/رد فیش
@@ -128,7 +134,7 @@ bot.action(/retry_payment_(.+)/, async (ctx) => {
     const order = await Order.findById(orderId);
     if (!order) return ctx.answerCbQuery("❌ سفارش پیدا نشد.");
 
-    order.status = "payment_review"; // وضعیت دوباره آماده بررسی
+    order.status = "awaiting_payment"; // وضعیت دوباره آماده بررسی
     await order.save();
 
     await ctx.telegram.sendMessage(order.userId.telegramId, "💳 لطفا دوباره رسید خود را ارسال کنید.");
@@ -519,6 +525,26 @@ bot.on("text", async (ctx) => {
     await connectDB();
     const user = await User.findOne({ telegramId: ctx.from.id });
     if (!user) return;
+
+    const adminId = ctx.from.id.toString();
+    const orderId = waitingForRejectReason.get(adminId);
+    if (orderId) {
+        // ادمین در حالت نوشتن دلیل رد محصول است
+        const reason = ctx.message.text;
+        const order = await Order.findById(orderId).populate("userId productId");
+        if (!order) return ctx.reply("❌ سفارش پیدا نشد.");
+
+        order.status = "rejected";
+        await order.save();
+
+        // ارسال دلیل به کاربر
+        await ctx.telegram.sendMessage(order.userId.telegramId,
+            `❌ محصول شما توسط ادمین رد شد.\n📌 دلیل: ${reason}`
+        );
+
+        waitingForRejectReason.delete(adminId);
+        return ctx.reply("✅ دلیل رد محصول به کاربر ارسال شد.");
+    }
 
     // ---- مدیریت مراحل آدرس ----
     if (user.step === "address_province") {
