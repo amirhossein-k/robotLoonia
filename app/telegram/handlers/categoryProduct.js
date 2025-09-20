@@ -1,3 +1,4 @@
+// app\telegram\handlers\categoryProduct.js
 import { connectDB } from "@/app/lib/mongodb";
 import Product from "@/app/model/product";
 
@@ -5,7 +6,7 @@ export const userProductPage = new Map();
 // برای نگه‌داشتن آیدی پیام‌های محصولات
 export const userProductMessages = new Map();
 
-export async function productsCategoryHandler(ctx) {
+export async function productsCategoryHandler(ctx, category) {
   await connectDB();
 
   const query = category ? { category } : {};

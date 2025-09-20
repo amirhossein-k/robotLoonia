@@ -35,6 +35,8 @@ bot.action([
     "address",
     "upload_photos",
     "list",
+    "list_products",   // 🔥 اینو اضافه کن
+
     "next_products",
     "prev_products",
     "admin_add_product",

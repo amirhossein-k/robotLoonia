@@ -1,3 +1,4 @@
+// app\telegram\handlers\products.js
 import { connectDB } from "@/app/lib/mongodb";
 import Product from "@/app/model/product";
 
