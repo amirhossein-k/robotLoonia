@@ -19,7 +19,8 @@ const activeChats = new Map<number, number>();
 const editState = new Map<number, "about" | "searching" | "interests" | "name" | "age">();
 
 // Map برای نگه داشتن حالت منتظر دلیل رد
-const waitingForRejectReason = new Map<string, string>();
+const waitingForRejectReason = new Map<number, string>();
+// key = adminId, value = orderId
 
 const bot = new Telegraf(process.env.BOT_TOKEN!);
 // ---- استارت و ثبت پروفایل ----
@@ -77,7 +78,9 @@ bot.action(/reject_product_(.+)/, async (ctx) => {
     order.status = "rejected";
     await order.save();
     // ذخیره سفارش در حالت انتظار دلیل
-    waitingForRejectReason.set(ctx.from.id.toString(), orderId);
+    const adminId = ctx.from.id;
+
+    waitingForRejectReason.set(adminId, orderId);
     console.log(`[DEBUG] ${waitingForRejectReason} - ذخیره سفارش در حالت انتظار دلیل`)
     await ctx.reply("لطفا دلیل رد کردن محصول را بنویسید:");
     await ctx.answerCbQuery("لطفا دلیل رد را وارد کنید.");
@@ -526,7 +529,7 @@ bot.on("text", async (ctx) => {
     const user = await User.findOne({ telegramId: ctx.from.id });
     if (!user) return;
 
-    const adminId = ctx.from.id.toString();
+    const adminId = ctx.from.id;
     console.log(`[DEBUG] ${adminId} - adminId`)
     const orderId = waitingForRejectReason.get(adminId);
     console.log(`[DEBUG] ${orderId} - orderId`)
