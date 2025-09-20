@@ -108,11 +108,31 @@ bot.action(/reject_receipt_(.+)/, async (ctx) => {
     order.status = "payment_rejected";
     await order.save();
 
-    await ctx.telegram.sendMessage(order.userId.telegramId,
-        `❌ فیش واریزی شما تایید نشد. لطفا دوباره اقدام کنید.`
-    );
+
+    await ctx.telegram.sendMessage(order.userId.telegramId, `❌ فیش واریزی شما تایید نشد. لطفا دوباره اقدام کنید.`, {
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    { text: "💳 اقدام دوباره", callback_data: `retry_payment_${order._id}` },
+                    { text: "💬 چت با ادمین", callback_data: `chat_admin` }
+                ]
+            ]
+        }
+    });
 
     await ctx.answerCbQuery("فیش رد شد.");
+});
+// دکمه اقدام دوباره
+bot.action(/retry_payment_(.+)/, async (ctx) => {
+    const orderId = ctx.match[1];
+    const order = await Order.findById(orderId);
+    if (!order) return ctx.answerCbQuery("❌ سفارش پیدا نشد.");
+
+    order.status = "payment_review"; // وضعیت دوباره آماده بررسی
+    await order.save();
+
+    await ctx.telegram.sendMessage(order.userId.telegramId, "💳 لطفا دوباره رسید خود را ارسال کنید.");
+    await ctx.answerCbQuery("وضعیت سفارش بروزرسانی شد.");
 });
 
 
