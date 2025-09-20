@@ -7,6 +7,8 @@ import { productsHandler, userProductPage } from "./products";
 import Order from "@/app/model/Order";
 import Product from "@/app/model/product";
 import { ADMIN_PHONE } from "./start";
+import { productsCategoryHandler } from "@/app/telegram/handlers/categoryProduct";
+
 export function callbackHandler() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return async (ctx) => {
@@ -92,6 +94,8 @@ export function callbackHandler() {
       return searchHandler(ctx); // نمایش پروفایل بعدی
     }
     if (data === "list") {
+      await ctx.answerCbQuery();
+
       return ctx.reply("لطفا انتخاب کنید", {
         reply_markup: {
           inline_keyboard: [
