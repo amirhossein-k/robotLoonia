@@ -51,6 +51,8 @@ bot.action([
 // مرحله 3: ادمین تایید/رد محصول
 // ========================
 bot.action(/approve_product_(.+)/, async (ctx) => {
+    await connectDB(); // ⭐ حتما اضافه کن
+
     const orderId = ctx.match[1];
     const order = await Order.findById(orderId).populate("userId productId");
     order.status = "awaiting_payment";
@@ -64,6 +66,8 @@ bot.action(/approve_product_(.+)/, async (ctx) => {
     await ctx.answerCbQuery("محصول تایید شد.");
 });
 bot.action(/reject_product_(.+)/, async (ctx) => {
+    await connectDB(); // ⭐ حتما اضافه کن
+
     const orderId = ctx.match[1];
     const order = await Order.findById(orderId).populate("userId productId");
     order.status = "rejected";

@@ -220,24 +220,24 @@ export function callbackHandler() {
       });
     }
 
-    if (data.startsWith("approve_product_")) {
-      await connectDB();
+    // if (data.startsWith("approve_product_")) {
+    //   await connectDB();
 
-      const orderId = data.replace("approve_product_", "");
-      const order = await Order.findById(orderId);
-      if (!order) return;
+    //   const orderId = data.replace("approve_product_", "");
+    //   const order = await Order.findById(orderId);
+    //   if (!order) return;
 
-      order.status = "awaiting_payment";
-      await order.save();
+    //   order.status = "awaiting_payment";
+    //   await order.save();
 
-      // پیام به کاربر
-      await ctx.telegram.sendMessage(
-        order.userId,
-        "✅ سفارش شما تایید شد.\n💳 لطفا مبلغ را به شماره کارت 1234-5678-9012 واریز کنید و رسید را ارسال نمایید."
-      );
+    //   // پیام به کاربر
+    //   await ctx.telegram.sendMessage(
+    //     order.userId,
+    //     "✅ سفارش شما تایید شد.\n💳 لطفا مبلغ را به شماره کارت 1234-5678-9012 واریز کنید و رسید را ارسال نمایید."
+    //   );
 
-      await ctx.reply("سفارش به حالت «منتظر پرداخت» تغییر یافت.");
-    }
+    //   await ctx.reply("سفارش به حالت «منتظر پرداخت» تغییر یافت.");
+    // }
     // ========================
     // مرحله 2: ادمین مشاهده سفارشات منتظر تایید
     // ========================
@@ -277,37 +277,37 @@ export function callbackHandler() {
     // ========================
     // مرحله 3: ادمین تایید/رد محصول
     // ========================
-    if (data.startsWith("approve_")) {
-      const orderId = data.replace("approve_", "");
-      await connectDB();
-      const order = await Order.findById(orderId);
-      if (!order) return ctx.reply("❌ سفارش پیدا نشد.");
+    // if (data.startsWith("approve_")) {
+    //   const orderId = data.replace("approve_", "");
+    //   await connectDB();
+    //   const order = await Order.findById(orderId);
+    //   if (!order) return ctx.reply("❌ سفارش پیدا نشد.");
 
-      order.status = "approved";
-      await order.save();
+    //   order.status = "approved";
+    //   await order.save();
 
-      await ctx.reply("✅ سفارش تایید شد.");
-      await ctx.telegram.sendMessage(
-        order.userId,
-        "🎉 سفارش شما تایید شد! به زودی پردازش می‌شود."
-      );
-    }
+    //   await ctx.reply("✅ سفارش تایید شد.");
+    //   await ctx.telegram.sendMessage(
+    //     order.userId,
+    //     "🎉 سفارش شما تایید شد! به زودی پردازش می‌شود."
+    //   );
+    // }
 
-    if (data.startsWith("reject_")) {
-      const orderId = data.replace("reject_", "");
-      await connectDB();
-      const order = await Order.findById(orderId);
-      if (!order) return ctx.reply("❌ سفارش پیدا نشد.");
+    // if (data.startsWith("reject_")) {
+    //   const orderId = data.replace("reject_", "");
+    //   await connectDB();
+    //   const order = await Order.findById(orderId);
+    //   if (!order) return ctx.reply("❌ سفارش پیدا نشد.");
 
-      order.status = "rejected";
-      await order.save();
+    //   order.status = "rejected";
+    //   await order.save();
 
-      await ctx.reply("❌ سفارش رد شد.");
-      await ctx.telegram.sendMessage(
-        order.userId,
-        "⛔ سفارش شما رد شد. لطفاً با پشتیبانی تماس بگیرید."
-      );
-    }
+    //   await ctx.reply("❌ سفارش رد شد.");
+    //   await ctx.telegram.sendMessage(
+    //     order.userId,
+    //     "⛔ سفارش شما رد شد. لطفاً با پشتیبانی تماس بگیرید."
+    //   );
+    // }
 
     if (data.startsWith("chat_")) {
       const buyerId = Number(data.replace("chat_", ""));
