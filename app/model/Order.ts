@@ -2,16 +2,16 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IOrder extends Document {
-    productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    productId: mongoose.Types.ObjectId; // ریفرنس به Product
+    userId: mongoose.Types.ObjectId;    // ریفرنس به User
     status: "pending" | "approved" | "payment_rejected" | "awaiting_payment" | "payment_review";
     paymentReceipt: string; // لینک عکس رسید
     createdAt: Date;
 }
 
 const OrderSchema: Schema = new Schema({
-    productId: { type: String, required: true },
-    userId: { type: String, required: true },
+    productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     status: {
         type: String, enum: [
             "pending",          // کاربر سفارش داده
