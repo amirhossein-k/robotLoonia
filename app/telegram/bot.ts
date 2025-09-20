@@ -662,7 +662,7 @@ bot.on("photo", async (ctx) => {
     // ========================
     // 2️⃣ اگر کاربر در مرحله ارسال رسید پرداخت است
     const pendingOrder = await Order.findOne({
-        userId: user.telegramId,
+        userId: user._id,
         status: "awaiting_payment"
     });
 
