@@ -91,6 +91,43 @@ export function callbackHandler() {
       userSearchIndex.set(ctx.from.id, nextIndex);
       return searchHandler(ctx); // نمایش پروفایل بعدی
     }
+    if (data === "list") {
+      return ctx.reply("لطفا انتخاب کنید", {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "همه محصولات", callback_data: "list_products" }],
+            [{ text: "سامسونگ", callback_data: "category_samsung" }],
+            [{ text: "شیائومی", callback_data: "category_xiaomi" }],
+            [
+              {
+                text: "ایفون",
+                callback_data: "category_iphone",
+              },
+            ],
+          ],
+        },
+      });
+    }
+    if (data.startsWith("category_")) {
+      const category = data.replace("category_", "");
+      userProductPage.set(ctx.from.id, 0);
+      return productsCategoryHandler(ctx, category);
+    }
+
+    if (data.startsWith("next_productsCategory_")) {
+      const category = data.replace("next_productsCategory_", "");
+      const current = userProductPage.get(ctx.from.id) || 0;
+      userProductPage.set(ctx.from.id, current + 1);
+      return productsCategoryHandler(ctx, category);
+    }
+
+    if (data.startsWith("prev_productsCategory_")) {
+      const category = data.replace("prev_productsCategory_", "");
+      const current = userProductPage.get(ctx.from.id) || 0;
+      const newPage = current > 0 ? current - 1 : 0;
+      userProductPage.set(ctx.from.id, newPage);
+      return productsCategoryHandler(ctx, category);
+    }
 
     // product
     if (data === "list_products") {

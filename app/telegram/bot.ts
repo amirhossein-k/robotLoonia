@@ -34,7 +34,7 @@ bot.action([
     "edit_profile",
     "address",
     "upload_photos",
-    "list_products",
+    "list",
     "next_products",
     "prev_products",
     "admin_add_product",
@@ -529,11 +529,16 @@ bot.on("text", async (ctx) => {
 
     if (user.step === "add_product_price") {
         user.tempProduct.price = ctx.message.text;
+        user.step = "add_product_category";
+        await user.save();
+        return ctx.reply("دسته بندی محصول را وارد کنید:");
+    }
+    if (user.step === "add_product_category") {
+        user.tempProduct.category = ctx.message.text;
         user.step = "add_product_size";
         await user.save();
         return ctx.reply("📏 اندازه محصول را وارد کنید:");
     }
-
     if (user.step === "add_product_size") {
         user.tempProduct.size = ctx.message.text;
         user.step = "add_product_photo";

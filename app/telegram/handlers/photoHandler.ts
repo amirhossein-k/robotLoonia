@@ -98,6 +98,7 @@ export function photoUploadHandler() {
                     description: user.tempProduct.description,
                     price: user.tempProduct.price,
                     size: user.tempProduct.size,
+                    category: user.tempProduct.category,
                     photoUrl: fileId,
                 });
 

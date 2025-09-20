@@ -10,6 +10,7 @@ export interface IProduct extends Document {
     price: string;
     size: string;
     photoUrl: string;
+    category: string
 }
 
 
@@ -20,6 +21,7 @@ const ProductSchema: Schema = new Schema(
         price: String,
         size: String,
         photoUrl: String,
+        category: String
     }
 )
 

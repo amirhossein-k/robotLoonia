@@ -38,7 +38,7 @@ export function profileHandler() {
                             reply_markup: {
                                 inline_keyboard: [
                                     [{ text: "➕ افزودن محصول", callback_data: "admin_add_product" }],
-                                    [{ text: "📦 لیست محصولات", callback_data: "list_products" }],
+                                    [{ text: "📦 لیست محصولات", callback_data: "list" }],
                                     [{ text: "🛒 لیست سفارشات", callback_data: "admin_orders" }],
                                 ],
                             },
@@ -49,7 +49,7 @@ export function profileHandler() {
                         return ctx.reply("مرسی که ما را انتخاب کردی برای دیدن محصولات روی دکمه مربوط به ان کلیک کن", {
                             reply_markup: {
                                 inline_keyboard: [
-                                    [{ text: "محصولات", callback_data: "show_product" }],
+                                    [{ text: "محصولات", callback_data: "list" }],
                                     [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
                                     [{ text: "ادرس", callback_data: "edit_profile" }],
                                     [

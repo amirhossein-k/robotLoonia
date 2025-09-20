@@ -28,6 +28,7 @@ const userSchema = new Schema(
             description: String,
             price: String,
             size: String,
+            category: String
         },
         photos: {
             slot1: { type: String, default: null },
