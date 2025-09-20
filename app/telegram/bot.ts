@@ -36,9 +36,6 @@ bot.action([
     "upload_photos",
     "list",
     "list_products",   // 🔥 اینو اضافه کن
-    "/category_.+/",
-    "/next_productsCategory_.+/",
-    "/prev_productsCategory_.+/",
     "next_products",
     "prev_products",
     "admin_add_product",
@@ -46,6 +43,11 @@ bot.action([
     "orders_pending",
     "orders_approved"
 ], callbackHandler());
+
+// دسته‌بندی‌ها رو با regex هندل کن
+bot.action(/category_.+/, callbackHandler());
+bot.action(/next_productsCategory_.+/, callbackHandler());
+bot.action(/prev_productsCategory_.+/, callbackHandler());
 // همچنین برای دکمه‌هایی که dynamic هستن:
 bot.action(/^(order_|approve_|reject_|chat_)\w+/, callbackHandler());
 // ---- آپلود عکس ----
