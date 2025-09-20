@@ -27,7 +27,7 @@ export function startHandler() {
         {
           reply_markup: {
             inline_keyboard: [
-              [{ text: "محصولات", callback_data: "show_product" }],
+              [{ text: "محصولات", callback_data: "list" }],
               [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
               [{ text: "ادرس", callback_data: "address" }],
               [
