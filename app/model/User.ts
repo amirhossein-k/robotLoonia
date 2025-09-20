@@ -30,6 +30,8 @@ const userSchema = new Schema(
             size: String,
             category: String
         },
+        pendingOrderProductId: { type: String, default: null },
+
         photos: {
             slot1: { type: String, default: null },
             slot2: { type: String, default: null },

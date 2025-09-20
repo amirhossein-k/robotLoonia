@@ -8,6 +8,7 @@ import { connectDB } from "../lib/mongodb";
 import User from "../model/User";
 import { InputMedia, InputMediaPhoto, CallbackQuery } from "typegram";
 import { searchHandler, userSearchIndex, userSearchResults } from "./handlers/searchHandler";
+import Product from "@/app/model/product";
 
 import Message from "@/app/model/Message";
 import Chat from "../model/Chat";
@@ -489,6 +490,27 @@ bot.on("text", async (ctx) => {
         user.postalCode = ctx.message.text.trim();
         user.profileSet = "6"; // یا هر step که نشان‌دهنده تکمیل باشد (مثلاً برگشت به پروفایل کامل)
         await user.save();
+        // اگر محصولی در انتظار بود
+        if (user.pendingOrderProductId) {
+            const product = await Product.findById(user.pendingOrderProductId);
+            user.pendingOrderProductId = null; // ریست
+            await user.save();
+
+            if (product) {
+                return ctx.replyWithPhoto(product.photoUrl, {
+                    caption: `🛍 ${product.title}\n\n${product.description}\n💵 قیمت: ${product.price} تومان\n📏 اندازه: ${product.size}`,
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: "📝 ثبت سفارش", callback_data: `order_${product._id}` }],
+                            [{ text: "محصولات", callback_data: "show_product" }],
+                            [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
+                            [{ text: "ادرس", callback_data: "address" }],
+
+                        ],
+                    },
+                });
+            }
+        }
         const profileText = `
         ✅ اطلاعات آدرس شما با موفقیت ذخیره شد!
         👤 پروفایل شما:

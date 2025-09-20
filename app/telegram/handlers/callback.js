@@ -8,6 +8,7 @@ import Order from "@/app/model/Order";
 import Product from "@/app/model/product";
 import { ADMIN_PHONE } from "./start";
 import { productsCategoryHandler } from "@/app/telegram/handlers/categoryProduct";
+import Order from "@/app/model/Order";
 
 export function callbackHandler() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -154,7 +155,44 @@ export function callbackHandler() {
     // سفارش
     if (data.startsWith("order_")) {
       const productId = data.replace("order_", "");
-      return ctx.reply(`✅ سفارش محصول ${productId} ثبت شد.`);
+      await connectDB();
+
+      const user = await User.findOne({ telegramId: ctx.from.id });
+      if (!user) {
+        return ctx.reply("❌ پروفایل شما پیدا نشد. لطفاً دوباره /start بزنید.");
+      }
+      // 🔍 بررسی آدرس
+      // اگر آدرس خالی بود
+      if (
+        !user.provinceText ||
+        !user.cityText ||
+        !user.postalAddress ||
+        !user.postalCode
+      ) {
+        user.step = "address_province"; // شروع فرایند آدرس
+        user.pendingOrderProductId = productId; // ذخیره محصولی که قصد سفارش داشت
+        await user.save();
+        return ctx.reply(
+          "📍 لطفاً ابتدا آدرس خود را تکمیل کنید.\n\n🗺 نام استان خود را وارد کنید:"
+        );
+      }
+      // اگر آدرس پر بود → ادامه ثبت سفارش
+      const product = await Product.findById(productId);
+      if (!product) {
+        return ctx.reply("❌ محصول پیدا نشد.");
+      }
+
+      // ایجاد سفارش
+      const newOrder = await Order.create({
+        productId: product._id,
+        userId: user._id,
+        status: "pending", // پیش‌فرض
+        paymentReceipt: "", // بعداً کاربر رسید رو آپلود می‌کنه
+      });
+
+      return ctx.reply(
+        `✅ سفارش محصول "${product.title}" ثبت شد!\n\n📌 وضعیت: در انتظار تایید`
+      );
     }
 
     // admin
