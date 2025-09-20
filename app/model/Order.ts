@@ -2,8 +2,8 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IOrder extends Document {
-    productId: string;
-    userId: string;
+    productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     status: "pending" | "approved" | "payment_rejected" | "awaiting_payment" | "payment_review";
     paymentReceipt: string; // لینک عکس رسید
     createdAt: Date;
@@ -21,7 +21,7 @@ const OrderSchema: Schema = new Schema({
             "payment_rejected", // رسید رد شد
         ], default: "pending"
     },
-    paymentReceipt: String,  // file_id عکس رسید
+    paymentReceipt: { type: String, default: "" },// file_id عکس رسید
     chatMode: { type: Boolean, default: false }, // گفتگو فعال است یا نه
     createdAt: { type: Date, default: Date.now },
 });

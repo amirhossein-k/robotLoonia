@@ -43,9 +43,65 @@ bot.action([
     "admin_add_product",
     "admin_orders",
     "orders_pending",
-    "approve_order_",
+    // "approve_order_",
     "orders_approved"
 ], callbackHandler());
+
+// ========================
+// مرحله 3: ادمین تایید/رد محصول
+// ========================
+bot.action(/approve_product_(.+)/, async (ctx) => {
+    const orderId = ctx.match[1];
+    const order = await Order.findById(orderId).populate("userId productId");
+    order.status = "awaiting_payment";
+    await order.save();
+
+    await ctx.telegram.sendMessage(order.userId.telegramId,
+        `✅ ادمین محصول شما را تایید کرد.
+💰 لطفا مبلغ ${order.productId.price} را به شماره حساب X واریز کرده و رسید را ارسال کنید.`
+    );
+
+    await ctx.answerCbQuery("محصول تایید شد.");
+});
+bot.action(/reject_product_(.+)/, async (ctx) => {
+    const orderId = ctx.match[1];
+    const order = await Order.findById(orderId).populate("userId productId");
+    order.status = "rejected";
+    await order.save();
+
+    await ctx.telegram.sendMessage(order.userId.telegramId, `❌ محصول شما توسط ادمین رد شد.`);
+    await ctx.answerCbQuery("محصول رد شد.");
+});
+// ========================
+// مرحله 5: ادمین تایید/رد فیش
+// ========================
+bot.action(/confirm_receipt_(.+)/, async (ctx) => {
+    const orderId = ctx.match[1];
+    const order = await Order.findById(orderId).populate("userId productId");
+    order.status = "approved";
+    await order.save();
+
+    await ctx.telegram.sendMessage(order.userId.telegramId,
+        `✅ سفارش شما تایید شد.
+📦 پس از ارسال، کد رهگیری برای شما ارسال خواهد شد.`
+    );
+
+    await ctx.answerCbQuery("فیش تایید شد.");
+});
+
+bot.action(/reject_receipt_(.+)/, async (ctx) => {
+    const orderId = ctx.match[1];
+    const order = await Order.findById(orderId).populate("userId productId");
+    order.status = "rejected";
+    await order.save();
+
+    await ctx.telegram.sendMessage(order.userId.telegramId,
+        `❌ فیش واریزی شما تایید نشد. لطفا دوباره اقدام کنید.`
+    );
+
+    await ctx.answerCbQuery("فیش رد شد.");
+});
+
 
 // دسته‌بندی‌ها رو با regex هندل کن
 bot.action(/category_.+/, callbackHandler());
@@ -421,38 +477,6 @@ setInterval(async () => {
     }
 }, 2 * 60 * 1000); // هر 2 دقیقه
 
-bot.action(/^(edit_name|edit_age|edit_about|edit_searching|edit_interests)$/, async (ctx) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data = (ctx.callbackQuery as any).data;
-    if (data === "edit_about") editState.set(ctx.from.id, "about");
-    if (data === "edit_searching") editState.set(ctx.from.id, "searching");
-    if (data === "edit_interests") editState.set(ctx.from.id, "interests");
-    if (data === "edit_name") editState.set(ctx.from.id, "name");
-    if (data === "edit_age") editState.set(ctx.from.id, "age");
-
-
-    let message = "";
-    switch (data) {
-        case "edit_about":
-            message = "✏️ لطفاً متن جدید بخش 'درباره من' را وارد کنید:";
-            break;
-        case "edit_searching":
-            message = "🔎 لطفاً متن جدید بخش 'دنبال چی هستم' را وارد کنید:";
-            break;
-        case "edit_interests":
-            message = "🍿 لطفاً علایق و سرگرمی‌های خود را وارد کنید (با ویرگول جدا کنید):";
-            break;
-        case "edit_name":
-            message = "📝 لطفاً نام جدید خود را وارد کنید:";
-            break;
-        case "edit_age":
-            message = "🎂 لطفاً سن جدید خود را وارد کنید (فقط عدد):";
-            break;
-    }
-
-    await ctx.reply(message);
-
-});
 
 
 
@@ -576,57 +600,13 @@ bot.on("text", async (ctx) => {
         await user.save();
         return ctx.reply("📸 لطفاً عکس محصول را ارسال کنید:");
     }
-    // if (user.step === "add_product_size") {
-    //     user.tempProduct.size = ctx.message.text;
-    //     user.step = "add_product_photo";
-    //     await user.save();
-    //     return ctx.reply("📸 لطفاً عکس محصول را ارسال کنید:");
-    // }
-
-    // 
-
-    const state = editState.get(ctx.from.id);
-    if (state) {
-        // ویرایش بخش پروفایل
-        if (state === "about") user.bio = ctx.message.text;
-        if (state === "searching") user.lookingFor = ctx.message.text;
-        if (state === "interests") user.interests = ctx.message.text.split(/,|،/).map((s) => s.trim());
-        if (state === 'name') user.name = ctx.message.text
-        if (state === 'age') {
-            const ageNum = Number(ctx.message.text.trim())
-            if (isNaN(ageNum)) {
-                return ctx.reply("❌ حروف انگلیسی)لطفاً فقط عدد برای سن وارد کنید.)");
-            }
-            user.age = ageNum
-        }
-        await user.save();
-        editState.delete(ctx.from.id);
-
-        return ctx.reply("✅ تغییرات ذخیره شد!");
-    }
-
 
     // آیا کاربر در حال چت هست؟
     const chatWith = activeChats.get(user.telegramId);
     const message = ctx.message.text;
 
-    // --- جلوگیری از ارسال شماره موبایل ایران ---
-    const iranPhoneRegex = /(\+98|0)?9\d{9}/g;
-
-    // --- جلوگیری از ارسال آیدی تلگرام ---
-    const telegramIdRegex = /@[\w_]{3,}/g;
-
-    // --- جلوگیری از ارسال متن انگلیسی ---
-    const englishRegex = /[A-Za-z]/g;
-
 
     if (chatWith) {
-        if (iranPhoneRegex.test(message) || telegramIdRegex.test(message)) {
-            return ctx.reply("❌ ارسال شماره تماس یا آیدی تلگرام مجاز نیست.");
-        }
-        if (englishRegex.test(message)) {
-            return ctx.reply("❌ ارسال پیام به زبان انگلیسی مجاز نیست. لطفاً فارسی تایپ کنید.");
-        }
 
         // ذخیره در دیتابیس
         await Message.create({
@@ -673,6 +653,9 @@ bot.on("photo", async (ctx) => {
         });
 
     }
+    // ========================
+    // مرحله 4: کاربر ارسال فیش پرداخت
+    // ========================
     // 2️⃣ اگر کاربر در مرحله ارسال رسید پرداخت است
     const pendingOrder = await Order.findOne({
         userId: user.telegramId,

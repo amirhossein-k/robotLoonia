@@ -175,6 +175,7 @@ export function callbackHandler() {
           "📍 لطفاً ابتدا آدرس خود را تکمیل کنید.\n\n🗺 نام استان خود را وارد کنید:"
         );
       }
+
       // اگر آدرس پر بود → ادامه ثبت سفارش
       const product = await Product.findById(productId);
       if (!product) {
@@ -189,8 +190,12 @@ export function callbackHandler() {
         paymentReceipt: "", // بعداً کاربر رسید رو آپلود می‌کنه
       });
 
-      return ctx.reply(
+      await ctx.reply(
         `✅ سفارش محصول "${product.title}" ثبت شد!\n\n📌 وضعیت: در انتظار تایید`
+      );
+      await ctx.telegram.sendMessage(
+        622650522,
+        `📦 سفارش جدید از ${user.name} ثبت شد.\nبرای بررسی از دکمه 'سفارشات منتظر تایید' استفاده کنید.`
       );
     }
 
@@ -231,39 +236,45 @@ export function callbackHandler() {
 
       await ctx.reply("سفارش به حالت «منتظر پرداخت» تغییر یافت.");
     }
-
+    // ========================
+    // مرحله 2: ادمین مشاهده سفارشات منتظر تایید
+    // ========================
     if (data === "orders_pending") {
       await connectDB();
-      const orders = await Order.find({ status: "pending" });
+      const orders = await Order.find({ status: "pending" }).populate(
+        "productId userId"
+      );
 
       if (orders.length === 0) {
         return ctx.reply("⏳ سفارشی در انتظار تأیید وجود ندارد.");
       }
-
       for (const order of orders) {
-        const user = await User.findOne({ _id: order.userId });
-        const product = await Product.findOne({ _id: order.productId });
-
-        await ctx.replyWithPhoto(order.paymentReceipt, {
-          caption: `🛒 سفارش محصول: ${product?.title}\n👤 خریدار: ${user?.name}\n📱 شماره: ${user?.phone}`,
-          reply_markup: {
-            inline_keyboard: [
-              [
-                { text: "✅ تأیید", callback_data: `approve_${order._id}` },
-                { text: "❌ رد", callback_data: `reject_${order._id}` },
+        await ctx.reply(
+          `🛒 محصول: ${order.productId.title}\n👤 خریدار: ${order.userId.name}\n📱 شماره: ${order.userId.phone}\n💰 مبلغ: ${order.productId.price} تومان`,
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "✅ تایید محصول",
+                    callback_data: `approve_product_${order._id}`,
+                  },
+                ],
+                [
+                  {
+                    text: "❌ رد محصول",
+                    callback_data: `reject_product_${order._id}`,
+                  },
+                ],
               ],
-              [
-                {
-                  text: "💬 چت با خریدار",
-                  callback_data: `chat_${user?.telegramId}`,
-                },
-              ],
-            ],
-          },
-        });
+            },
+          }
+        );
       }
     }
-
+    // ========================
+    // مرحله 3: ادمین تایید/رد محصول
+    // ========================
     if (data.startsWith("approve_")) {
       const orderId = data.replace("approve_", "");
       await connectDB();
