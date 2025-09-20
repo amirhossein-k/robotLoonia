@@ -68,14 +68,32 @@ export function photoUploadHandler() {
 
             console.log("👉 photoUploadHandler triggered for", ctx.from.id);
             if (user.step === "add_product_photo") {
-                const fileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
+                let fileId: string;
+                // عکس معمولی (jpg/png)
+                if (ctx.message.photo) {
+                    fileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
+                }
+                // فایل webp یا هر نوع فایل تصویری
+                else if (ctx.message.document) {
+                    fileId = ctx.message.document.file_id;
+                }
+                // استیکر (که فرمتش webp هست)
+                else if (ctx.message.sticker) {
+                    fileId = ctx.message.sticker.file_id;
+                } else {
+                    return ctx.reply("❌ لطفاً یک عکس معتبر ارسال کنید (jpg, png, webp).");
+                }
+
+                // گرفتن لینک مستقیم فایل از تلگرام
+                const file = await ctx.telegram.getFile(fileId);
+                const fileUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`;
 
                 const newProduct = await product.create({
                     title: user.tempProduct.title,
                     description: user.tempProduct.description,
                     price: user.tempProduct.price,
                     size: user.tempProduct.size,
-                    photoUrl: fileId,
+                    photoUrl: fileUrl,
                 });
 
                 user.step = "done";
