@@ -489,6 +489,7 @@ bot.on("text", async (ctx) => {
     if (user.step === "address_postal_code") {
         user.postalCode = ctx.message.text.trim();
         user.profileSet = "6"; // یا هر step که نشان‌دهنده تکمیل باشد (مثلاً برگشت به پروفایل کامل)
+        user.step = "done"; // یا هر step که نشان‌دهنده تکمیل باشد (مثلاً برگشت به پروفایل کامل)
         await user.save();
         // اگر محصولی در انتظار بود
         if (user.pendingOrderProductId) {
