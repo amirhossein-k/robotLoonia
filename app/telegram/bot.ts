@@ -75,8 +75,10 @@ bot.action(/reject_product_(.+)/, async (ctx) => {
 
     const orderId = ctx.match[1];
     const order = await Order.findById(orderId).populate("userId productId");
-    order.status = "rejected";
-    await order.save();
+    if (!order) return ctx.answerCbQuery("❌ سفارش پیدا نشد.");
+
+    // order.status = "rejected";
+    // await order.save();
     // ذخیره سفارش در حالت انتظار دلیل
     const adminId = ctx.from.id;
 
@@ -526,8 +528,7 @@ setInterval(async () => {
 bot.on("text", async (ctx) => {
 
     await connectDB();
-    const user = await User.findOne({ telegramId: ctx.from.id });
-    if (!user) return;
+
 
     const adminId = ctx.from.id;
     console.log(`[DEBUG] ${adminId} - adminId`)
@@ -545,14 +546,24 @@ bot.on("text", async (ctx) => {
         await order.save();
 
         // ارسال دلیل به کاربر
+        // ارسال پیام به کاربر همراه با دکمه‌ها
         await ctx.telegram.sendMessage(order.userId.telegramId,
-            `❌ محصول شما توسط ادمین رد شد.\n📌 دلیل: ${reason}`
+            `❌ محصول شما توسط ادمین رد شد.\n📌 دلیل: ${reason}`,
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: "💳 اقدام دوباره", callback_data: `retry_payment_${order._id}` }],
+                        [{ text: "💬 چت با پشتیبانی", callback_data: "chat_with_admin" }]
+                    ]
+                }
+            }
         );
 
         waitingForRejectReason.delete(adminId);
         return ctx.reply("✅ دلیل رد محصول به کاربر ارسال شد.");
     }
-
+    const user = await User.findOne({ telegramId: ctx.from.id });
+    if (!user) return;
     // ---- مدیریت مراحل آدرس ----
     if (user.step === "address_province") {
         user.provinceText = ctx.message.text.trim();
