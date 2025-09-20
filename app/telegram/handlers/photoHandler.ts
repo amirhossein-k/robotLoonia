@@ -68,7 +68,29 @@ export function photoUploadHandler() {
 
             console.log("👉 photoUploadHandler triggered for", ctx.from.id);
             if (user.step === "add_product_photo") {
-                const fileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
+                let fileId: string | undefined;
+
+
+                // حالت معمول: photo array (ارسال به‌صورت تصویر)
+                if (ctx.message.photo && ctx.message.photo.length) {
+                    fileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
+                }
+                // اگر کاربر عکس را به صورت فایل فرستاد (document)
+                else if (ctx.message.document && ctx.message.document.mime_type?.startsWith("image/")) {
+                    const mime = ctx.message.document.mime_type;
+                    // جلوگیری از webp
+                    if (mime === "image/webp" || (ctx.message.document.file_name && ctx.message.document.file_name.toLowerCase().endsWith(".webp"))) {
+                        return ctx.reply("❌ فرمت webp پشتیبانی نمی‌شود. لطفاً عکس را به‌صورت JPG یا PNG ارسال کنید (به‌صورت تصویر/Photo).");
+                    }
+                    fileId = ctx.message.document.file_id;
+                }
+                // استیکر یا غیره
+                else if (ctx.message.sticker) {
+                    // استیکر معمولاً webp هست — ما نمی‌خواهیم webp ذخیره کنیم
+                    return ctx.reply("❌ استیکر قابل قبول نیست. لطفاً عکس واقعی (JPG/PNG) ارسال کنید.");
+                } else {
+                    return ctx.reply("❌ لطفاً یک عکس معتبر (JPG/PNG) ارسال کنید.");
+                }
 
                 const newProduct = await product.create({
                     title: user.tempProduct.title,
