@@ -550,7 +550,7 @@ bot.on("text", async (ctx) => {
             {
                 reply_markup: {
                     inline_keyboard: [
-                        [{ text: "💳 اقدام دوباره", callback_data: `retry_payment_${order._id}` }],
+                        [{ text: "📦 لیست محصولات", callback_data: "list" }],
                         [{ text: "💬 چت با پشتیبانی", callback_data: "chat_admin" }]
                     ]
                 }
