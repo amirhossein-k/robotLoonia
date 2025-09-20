@@ -80,9 +80,13 @@ bot.action(/reject_product_(.+)/, async (ctx) => {
     // order.status = "rejected";
     // await order.save();
     // ذخیره سفارش در حالت انتظار دلیل
-    const adminId = ctx.from.id;
 
-    waitingForRejectReason.set(adminId, orderId);
+
+    // منتظر دلیل توسط ادمین
+    order.awaitingRejectReason = true;
+    order.rejectReasonAdminId = ctx.from.id;
+    await order.save();
+
     console.log(`[DEBUG] ${waitingForRejectReason} - ذخیره سفارش در حالت انتظار دلیل`)
     await ctx.reply("لطفا دلیل رد کردن محصول را بنویسید:");
     await ctx.answerCbQuery("لطفا دلیل رد را وارد کنید.");
