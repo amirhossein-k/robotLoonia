@@ -531,37 +531,31 @@ bot.on("text", async (ctx) => {
 
 
     const adminId = ctx.from.id;
-    console.log(`[DEBUG] ${adminId} - adminId`)
-    const orderId = waitingForRejectReason.get(adminId);
-    console.log(`[DEBUG] ${orderId} - orderId`)
-    if (orderId) {
-        // ادمین در حالت نوشتن دلیل رد محصول است
+    // بررسی اینکه ادمین منتظر وارد کردن دلیل برای سفارش است
+    const order = await Order.findOne({ awaitingRejectReason: true, rejectReasonAdminId: adminId }).populate("userId productId");
+    if (order) {
         const reason = ctx.message.text;
-        const order = await Order.findById(orderId).populate("userId productId");
-        console.log(`[DEBUG] ${order} - order`)
-
-        if (!order) return ctx.reply("❌ سفارش پیدا نشد.");
-
         order.status = "rejected";
+        order.rejectReasonText = reason;
+        order.awaitingRejectReason = false;
+        order.rejectReasonAdminId = null;
         await order.save();
 
-        // ارسال دلیل به کاربر
-        // ارسال پیام به کاربر همراه با دکمه‌ها
         await ctx.telegram.sendMessage(order.userId.telegramId,
             `❌ محصول شما توسط ادمین رد شد.\n📌 دلیل: ${reason}`,
             {
                 reply_markup: {
                     inline_keyboard: [
                         [{ text: "💳 اقدام دوباره", callback_data: `retry_payment_${order._id}` }],
-                        [{ text: "💬 چت با پشتیبانی", callback_data: "chat_with_admin" }]
+                        [{ text: "💬 چت با پشتیبانی", callback_data: "chat_admin" }]
                     ]
                 }
             }
         );
 
-        waitingForRejectReason.delete(adminId);
         return ctx.reply("✅ دلیل رد محصول به کاربر ارسال شد.");
     }
+
     const user = await User.findOne({ telegramId: ctx.from.id });
     if (!user) return;
     // ---- مدیریت مراحل آدرس ----

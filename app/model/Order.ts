@@ -7,6 +7,10 @@ export interface IOrder extends Document {
     status: "pending" | "approved" | "payment_rejected" | "awaiting_payment" | "payment_review" | "rejected";
     paymentReceipt: string; // لینک عکس رسید
     createdAt: Date;
+    // فیلدهای جدید برای رد شدن با دلیل
+    awaitingRejectReason: boolean;   // آیا منتظر دلیل ادمین هستیم
+    rejectReasonAdminId: number | null;  // ادمینی که دلیل را وارد می‌کند
+    rejectReasonText: string;       // متن دلیل رد
 }
 
 const OrderSchema: Schema = new Schema({
@@ -25,6 +29,10 @@ const OrderSchema: Schema = new Schema({
     paymentReceipt: { type: String, default: "" },// file_id عکس رسید
     chatMode: { type: Boolean, default: false }, // گفتگو فعال است یا نه
     createdAt: { type: Date, default: Date.now },
+    // فیلدهای جدید
+    awaitingRejectReason: { type: Boolean, default: false },
+    rejectReasonAdminId: { type: Number, default: null },
+    rejectReasonText: { type: String, default: "" },
 });
 
 export default mongoose.models.Order ||
