@@ -36,7 +36,9 @@ bot.action([
     "upload_photos",
     "list",
     "list_products",   // 🔥 اینو اضافه کن
-
+    "/category_.+/",
+    "/next_productsCategory_.+/",
+    "/prev_productsCategory_.+/",
     "next_products",
     "prev_products",
     "admin_add_product",
