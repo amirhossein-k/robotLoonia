@@ -105,7 +105,7 @@ bot.action(/reject_receipt_(.+)/, async (ctx) => {
     const order = await Order.findById(orderId).populate("userId productId");
     if (!order) return ctx.answerCbQuery("❌ سفارش پیدا نشد.");
 
-    order.status = "rejected";
+    order.status = "payment_rejected";
     await order.save();
 
     await ctx.telegram.sendMessage(order.userId.telegramId,
