@@ -62,6 +62,8 @@ bot.action(/approve_product_(.+)/, async (ctx) => {
         `✅ ادمین محصول شما را تایید کرد.
 💰 لطفا مبلغ ${order.productId.price} را به شماره حساب X واریز کرده و رسید را ارسال کنید.`
     );
+    // پاک کردن پیام از چت ادمین
+    await ctx.deleteMessage();
 
     await ctx.answerCbQuery("محصول تایید شد.");
 });
@@ -91,7 +93,8 @@ bot.action(/confirm_receipt_(.+)/, async (ctx) => {
         `✅ سفارش شما تایید شد.
 📦 پس از ارسال، کد رهگیری برای شما ارسال خواهد شد.`
     );
-
+    // پاک کردن پیام از چت ادمین
+    await ctx.deleteMessage();
     await ctx.answerCbQuery("فیش تایید شد.");
 });
 
@@ -100,6 +103,8 @@ bot.action(/reject_receipt_(.+)/, async (ctx) => {
 
     const orderId = ctx.match[1];
     const order = await Order.findById(orderId).populate("userId productId");
+    if (!order) return ctx.answerCbQuery("❌ سفارش پیدا نشد.");
+
     order.status = "rejected";
     await order.save();
 
