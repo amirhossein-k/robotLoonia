@@ -220,8 +220,8 @@ export function callbackHandler() {
       });
     }
 
-    if (data.startsWith("approve_order_")) {
-      const orderId = data.replace("approve_order_", "");
+    if (data.startsWith("approve_product_")) {
+      const orderId = data.replace("approve_product_", "");
       const order = await Order.findById(orderId);
       if (!order) return;
 
