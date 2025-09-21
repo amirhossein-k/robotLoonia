@@ -106,7 +106,19 @@ bot.action(/confirm_receipt_(.+)/, async (ctx) => {
 
     await ctx.telegram.sendMessage(order.userId.telegramId,
         `✅ سفارش شما تایید شد.
-📦 پس از ارسال، کد رهگیری برای شما ارسال خواهد شد.`
+📦 پس از ارسال، کد رهگیری برای شما ارسال خواهد شد.
+از خرید شما سپاسگزاری در کمترین زمان برای شما ارسال خواهد شد
+` , {
+        reply_markup: {
+            inline_keyboard: [
+                [{ text: "محصولات", callback_data: "list" }],
+                [{ text: "پیگیری سفارش", callback_data: "peigiri" }, { text: "💬 چت با ادمین", callback_data: `chat_admin` }
+                ],
+                [{ text: "ادرس", callback_data: "address" }],
+
+            ]
+        }
+    }
     );
     // پاک کردن پیام از چت ادمین
     await ctx.deleteMessage();
@@ -733,10 +745,8 @@ bot.on("photo", async (ctx) => {
     // مرحله 4: کاربر ارسال فیش پرداخت
     // ========================
     // 2️⃣ اگر کاربر در مرحله ارسال رسید پرداخت است
-    const pendingOrder = await Order.findOne({
-        userId: user._id,
-        status: "awaiting_payment"
-    });
+    const pendingOrder = await Order.findOne({ userId: user._id, status: "awaiting_payment" })
+        .populate("productId userId");
 
     if (pendingOrder) {
         pendingOrder.paymentReceipt = fileId;

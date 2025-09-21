@@ -275,6 +275,48 @@ export function callbackHandler() {
       }
     }
     // ========================
+    //  مرحله 2: ادمین مشاهده سفارشات  تایید
+    // ========================
+    if (data === "orders_approved") {
+      await connectDB();
+
+      const orders = await Order.find({ status: "approved" })
+        .populate("productId userId")
+        .sort({ createdAt: -1 }); // 🆕 جدیدترین اول
+
+      if (orders.length === 0) {
+        return ctx.reply("⏳ سفارشی در  تأیید شده وجود ندارد.");
+      }
+      for (const order of orders) {
+        await ctx.reply(
+          `🛒 محصول: ${order.productId?.title || "-"}\n👤 خریدار: ${
+            order.userId?.name || "-"
+          }\n📱 شماره: ${order.userId?.phone || "-"}\n💰 مبلغ: ${
+            order.productId?.price || "-"
+          } تومان`,
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "✅ تایید محصول",
+                    callback_data: `approve_product_${order._id}`,
+                  },
+                ],
+                [
+                  {
+                    text: "❌ رد محصول",
+                    callback_data: `reject_product_${order._id}`,
+                  },
+                ],
+              ],
+            },
+          }
+        );
+      }
+    }
+
+    // ========================
     // مرحله 3: ادمین تایید/رد محصول
     // ========================
     // if (data.startsWith("approve_")) {
