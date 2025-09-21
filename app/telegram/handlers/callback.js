@@ -299,14 +299,8 @@ export function callbackHandler() {
               inline_keyboard: [
                 [
                   {
-                    text: "✅ تایید محصول",
-                    callback_data: `approve_product_${order._id}`,
-                  },
-                ],
-                [
-                  {
-                    text: "❌ رد محصول",
-                    callback_data: `reject_product_${order._id}`,
+                    text: "📦 ارسال شد",
+                    callback_data: `send_tracking_${order._id}`,
                   },
                 ],
               ],

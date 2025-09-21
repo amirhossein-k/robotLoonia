@@ -21,6 +21,8 @@ const editState = new Map<number, "about" | "searching" | "interests" | "name" |
 // Map برای نگه داشتن حالت منتظر دلیل رد
 const waitingForRejectReason = new Map<number, string>();
 // key = adminId, value = orderId
+// مپ موقت برای ذخیره اینکه کدوم سفارش منتظر کد پیگیریه
+const waitingForTracking = new Map();
 
 const bot = new Telegraf(process.env.BOT_TOKEN!);
 // ---- استارت و ثبت پروفایل ----
@@ -161,8 +163,22 @@ bot.action(/retry_payment_(.+)/, async (ctx) => {
     await ctx.telegram.sendMessage(order.userId.telegramId, "💳 لطفا دوباره رسید خود را ارسال کنید.");
     await ctx.answerCbQuery("وضعیت سفارش بروزرسانی شد.");
 });
+// پیام ارسال شد و اضافه کردن کد رهگیری پستی
+bot.action(/send_tracking_(.+)/, async (ctx) => {
+    await connectDB();
+    const orderId = ctx.match[1];
+    const order = await Order.findById(orderId);
 
+    if (!order) return ctx.reply("❌ سفارش پیدا نشد.");
 
+    order.awaitingTrackingCode = true;
+    order.trackingAdminId = ctx.from.id;
+    await order.save();
+
+    await ctx.reply("📮 لطفاً کد پیگیری مرسوله را وارد کنید:");
+    await ctx.answerCbQuery();
+
+});
 // دسته‌بندی‌ها رو با regex هندل کن
 bot.action(/category_.+/, callbackHandler());
 bot.action(/next_productsCategory_.+/, callbackHandler());
@@ -570,6 +586,24 @@ bot.on("text", async (ctx) => {
         );
 
         return ctx.reply("✅ دلیل رد محصول به کاربر ارسال شد.");
+    }
+    // بررسی اینکه ادمین منتظر وارد کردن کد پیگیری است
+    const trackingOrder = await Order.findOne({ awaitingTrackingCode: true, trackingAdminId: ctx.from.id }).populate("userId productId");
+    if (trackingOrder) {
+        const trackingCode = ctx.message.text;
+
+        trackingOrder.trackingCode = trackingCode;
+        trackingOrder.awaitingTrackingCode = false;
+        trackingOrder.trackingAdminId = null;
+        await trackingOrder.save();
+
+        // اطلاع به کاربر
+        await ctx.telegram.sendMessage(
+            trackingOrder.userId.telegramId,
+            `📦 سفارش شما ارسال شد.\n🛒 محصول: ${trackingOrder.productId.title}\n💰 مبلغ: ${trackingOrder.productId.price} تومان\n🔢 کد پیگیری: ${trackingCode}`
+        );
+
+        return ctx.reply("✅ کد پیگیری ثبت و برای کاربر ارسال شد.");
     }
 
     const user = await User.findOne({ telegramId: ctx.from.id });
