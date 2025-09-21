@@ -268,6 +268,8 @@ export function callbackHandler() {
                     callback_data: `reject_product_${order._id}`,
                   },
                 ],
+                [{ text: "⚙️ منوی ادمین", callback_data: "admin_menu" }],
+                ,
               ],
             },
           }
@@ -303,6 +305,7 @@ export function callbackHandler() {
                     callback_data: `send_tracking_${order._id}`,
                   },
                 ],
+                [{ text: "⚙️ منوی ادمین", callback_data: "admin_menu" }],
               ],
             },
           }

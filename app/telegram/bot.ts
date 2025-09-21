@@ -113,10 +113,7 @@ bot.action(/confirm_receipt_(.+)/, async (ctx) => {
 ` , {
         reply_markup: {
             inline_keyboard: [
-                [{ text: "محصولات", callback_data: "list" }],
-                [{ text: "پیگیری سفارش", callback_data: "peigiri" }, { text: "💬 چت با ادمین", callback_data: `chat_admin` }
-                ],
-                [{ text: "ادرس", callback_data: "address" }],
+                [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }],
 
             ]
         }
@@ -144,7 +141,8 @@ bot.action(/reject_receipt_(.+)/, async (ctx) => {
                 [
                     { text: "💳 اقدام دوباره", callback_data: `retry_payment_${order._id}` },
                     { text: "💬 چت با ادمین", callback_data: `chat_admin` }
-                ]
+                ],
+                [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }],
             ]
         }
     });
@@ -179,6 +177,34 @@ bot.action(/send_tracking_(.+)/, async (ctx) => {
     await ctx.answerCbQuery();
 
 });
+bot.action("admin_menu", async (ctx) => {
+    await ctx.reply("📌 منوی مدیریت:", {
+        reply_markup: {
+            inline_keyboard: [
+                [{ text: "➕ افزودن محصول", callback_data: "admin_add_product" }],
+                [{ text: "📦 لیست محصولات", callback_data: "list" }],
+                [{ text: "🛒 لیست سفارشات", callback_data: "admin_orders" }],
+            ],
+        },
+    });
+    await ctx.answerCbQuery(); // برای بستن لودینگ تلگرام
+});
+bot.action("user_menu", async (ctx) => {
+    await ctx.reply("📌 منوی مدیریت:", {
+        reply_markup: {
+            inline_keyboard: [
+                [{ text: "محصولات", callback_data: "list" }],
+                [
+                    { text: "پیگیری سفارش", callback_data: "peigiri" },
+                    { text: "💬 چت با ادمین", callback_data: `chat_admin` },
+                ],
+                [{ text: "ادرس", callback_data: "address" }],
+            ],
+        },
+    });
+    await ctx.answerCbQuery(); // برای بستن لودینگ تلگرام
+});
+
 // دسته‌بندی‌ها رو با regex هندل کن
 bot.action(/category_.+/, callbackHandler());
 bot.action(/next_productsCategory_.+/, callbackHandler());
@@ -255,126 +281,12 @@ bot.action("show_profile", async (ctx) => {
     return ctx.reply(profileText, { reply_markup: { inline_keyboard: buttons } });
 
 });
-// ---- جستجو ----
-bot.action("search_profiles", async (ctx) => {
-    const chatWith = activeChats.get(ctx.from.id);
-    if (chatWith) {
-        return ctx.reply("❌ شما در حال حاضر در یک چت فعال هستید. برای دسترسی به پروفایل ابتدا چت را قطع کنید.");
-    }
-    await searchHandler(ctx);
-});
+
 // 4. **هندل خرید عضویت ویژه (buy_premium)**  
 // وقتی کاربر دکمه "⭐️ عضویت ویژه" رو بزنه:  
 // - پیام قیمت بیاد.  
-// - دکمه پرداخت (می‌تونی درگاه پرداخت ایرانی وصل کنی).  
-bot.action("search_by_province", async (ctx) => {
-    const chatWith = activeChats.get(ctx.from.id);
-    if (chatWith) {
-        return ctx.reply("❌ شما در حال حاضر در یک چت فعال هستید. برای دسترسی به پروفایل ابتدا چت را قطع کنید.");
-    }
+// - دکمه پرداخت (می‌تونی درگاه پرداخت ایرانی وصل کنی). 
 
-    await ctx.reply(
-        "📍 لطفاً استان مورد نظر خود را انتخاب کنید:",
-        getProvinceKeyboard(true)
-    );
-});
-
-
-bot.action("buy_premium", async (ctx) => {
-    const chatWith = activeChats.get(ctx.from.id);
-    if (chatWith) {
-        return ctx.reply("❌ شما در حال حاضر در یک چت فعال هستید. برای دسترسی به پروفایل ابتدا چت را قطع کنید.");
-    }
-    await ctx.reply("⭐️ عضویت ویژه\n\n✅ قیمت: 10,000 تومان\nبا خرید عضویت ویژه می‌توانید لایک نامحدود داشته باشید.", {
-        reply_markup: {
-            inline_keyboard: [
-                [{ text: "💳 پرداخت", url: "https://your-payment-gateway.com/pay?amount=10000" }]
-            ]
-        }
-    });
-});
-
-
-
-
-// ---- لایک کاربر ----
-bot.action(/like_\d+/, async (ctx) => {
-    const chatWith = activeChats.get(ctx.from.id);
-    if (chatWith) {
-        return ctx.reply("❌ شما در حال حاضر در یک چت فعال هستید. برای دسترسی به پروفایل ابتدا چت را قطع کنید.");
-    }
-    await connectDB();
-
-    // داخل handler دکمه
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data = (ctx.callbackQuery as any)?.data;
-    if (!data) return ctx.reply("❌ خطا: داده نامعتبر");
-
-    // حالا می‌توانیم از data استفاده کنیم
-    const likedId = Number(data.replace("like_", ""));
-    if (isNaN(likedId)) return ctx.reply("❌ خطا: کاربر نامعتبر");
-
-    const user = await User.findOne({ telegramId: ctx.from.id });
-    const likedUser = await User.findOne({ telegramId: likedId });
-    if (!user || !likedUser) return ctx.reply("❌ کاربر پیدا نشد.");
-
-
-    if (!user.isPremium) {
-        if (user.likesRemaining <= 0) {
-            return ctx.reply("❌ سهمیه لایک شما تمام شد.\n\nبرای لایک نامحدود باید عضویت ویژه تهیه کنید.", {
-                reply_markup: {
-                    inline_keyboard: [
-                        [{ text: "⭐️ عضویت ویژه", callback_data: "buy_premium" }]
-                    ]
-                }
-            });
-        }
-        user.likesRemaining -= 1;
-        await user.save();
-
-        await ctx.reply(`❤️ لایک شما ثبت شد! \nتعداد لایک باقی‌مانده: ${user.likesRemaining}`);
-    }
-    // ثبت لایک
-    if (!user.likes.includes(likedId)) {
-        user.likes.push(likedId);
-        await user.save();
-    }
-
-    // ثبت در likedBy کاربر مقابل و اطلاع
-    if (!likedUser.likedBy.includes(user.telegramId)) {
-        likedUser.likedBy.push(user.telegramId); // اضافه کردن به درخواست‌های در انتظار
-        await likedUser.save();
-
-        // اطلاع به کاربر B
-        await ctx.telegram.sendMessage(likedUser.telegramId,
-            `❤️ کاربر ${user.name} شما را لایک کرد!`,
-            {
-                reply_markup: {
-                    inline_keyboard: [
-                        [{ text: "مشاهده پروفایل", callback_data: `show_profile_${user.telegramId}` }],
-                        [
-                            { text: "قبول درخواست", callback_data: `accept_request_${user.telegramId}` },
-                            { text: "رد کردن", callback_data: `reject_request_${user.telegramId}` }
-                        ]
-                    ]
-                }
-            });
-    }
-    // بررسی Match
-    if (likedUser.likes.includes(user.telegramId) && !user.matches.includes(likedId)) {
-        user.matches.push(likedId);
-        likedUser.matches.push(user.telegramId);
-        await user.save();
-        await likedUser.save();
-
-        await ctx.telegram.sendMessage(user.telegramId,
-            `🎉 شما با ${likedUser.name} Match شدید!`);
-        await ctx.telegram.sendMessage(likedUser.telegramId,
-            `🎉 شما با ${user.name} Match شدید!`);
-    } else {
-        await ctx.reply("✅ لایک ثبت شد!");
-    }
-});
 
 // ---- مشاهده پروفایل کاربر از دکمه ----
 bot.action(/show_profile_\d+/, async (ctx) => {
@@ -578,8 +490,8 @@ bot.on("text", async (ctx) => {
             {
                 reply_markup: {
                     inline_keyboard: [
-                        [{ text: "📦 لیست محصولات", callback_data: "list" }],
-                        [{ text: "💬 چت با پشتیبانی", callback_data: "chat_admin" }]
+                        [{ text: "💬 چت با پشتیبانی", callback_data: "chat_admin" }],
+                        [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }]
                     ]
                 }
             }
@@ -600,7 +512,14 @@ bot.on("text", async (ctx) => {
         // اطلاع به کاربر
         await ctx.telegram.sendMessage(
             trackingOrder.userId.telegramId,
-            `📦 سفارش شما ارسال شد.\n🛒 محصول: ${trackingOrder.productId.title}\n💰 مبلغ: ${trackingOrder.productId.price} تومان\n🔢 کد پیگیری: ${trackingCode}`
+            `📦 سفارش شما ارسال شد.\n🛒 محصول: ${trackingOrder.productId.title}\n💰 مبلغ: ${trackingOrder.productId.price} تومان\n🔢 کد پیگیری: ${trackingCode}`,
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }],
+                    ],
+                },
+            }
         );
 
         return ctx.reply("✅ کد پیگیری ثبت و برای کاربر ارسال شد.");
@@ -650,9 +569,7 @@ bot.on("text", async (ctx) => {
                     reply_markup: {
                         inline_keyboard: [
                             [{ text: "📝 ثبت سفارش", callback_data: `order_${product._id}` }],
-                            [{ text: "محصولات", callback_data: "show_product" }],
-                            [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
-                            [{ text: "ادرس", callback_data: "address" }],
+                            [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }]
 
                         ],
                     },
@@ -669,20 +586,21 @@ bot.on("text", async (ctx) => {
         کد پستی :  ${user.postalCode || "-"}
 
         `;
-        const buttons = [
-            [{ text: "پروفایل", callback_data: "edit_photos" }],
-            [{ text: "✏️ ویرایش ادرس", callback_data: "address" }],
-            [{ text: "محصولات", callback_data: "list" }],
-            [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
-            [
-                {
-                    text: "دسته بندی",
-                    callback_data: "category",
-                },
-            ],
-        ];
+        // const buttons = [
+        //     [{ text: "پروفایل", callback_data: "edit_photos" }],
+        //     [{ text: "✏️ ویرایش ادرس", callback_data: "address" }],
+        //     [{ text: "محصولات", callback_data: "list" }],
+        //     [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
+
+        // ];
         console.log(`[DEBUG] Postal code set: ${user.postalCode}, address completed`);
-        await ctx.reply(profileText, { reply_markup: { inline_keyboard: buttons } });
+        await ctx.reply(profileText, {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }],
+                ]
+            }
+        });
 
 
     }
@@ -795,6 +713,7 @@ bot.on("photo", async (ctx) => {
                 inline_keyboard: [
                     [{ text: "✅ تایید رسید", callback_data: `confirm_receipt_${pendingOrder._id}` }],
                     [{ text: "❌ رد رسید", callback_data: `reject_receipt_${pendingOrder._id}` }],
+                    [{ text: "⚙️ منوی ادمین", callback_data: "admin_menu" }],
                 ],
             },
         });
