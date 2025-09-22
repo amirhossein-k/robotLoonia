@@ -616,10 +616,10 @@ bot.action("end_chat", async (ctx) => {
 
     // اطلاع به هر دو طرف + بازگرداندن به پروفایل
     await ctx.reply("❌ شما چت را قطع کردید.");
-    await showProfile(user.telegramId, false); // کاربر
+    await showProfile(user.telegramId, true); // کاربر
 
     await ctx.telegram.sendMessage(chatWith, `❌ کاربر ${user.name} چت را قطع کرد.`);
-    await showProfile(chatWith, true); // ادمین
+    await showProfile(chatWith, false); // ادمین
 
 
 });
