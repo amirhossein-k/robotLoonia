@@ -336,7 +336,23 @@ bot.action(/resume_(.+)/, async (ctx) => {
 
 // هندلر چت داینامیک
 bot.action(/chat_(\d+)/, async (ctx) => {
+    await connectDB();
+    const userId = Number(ctx.from.id);
+
     const targetId = Number(ctx.match[1]); // ID ادمین از callback_data گرفته می‌شود
+
+
+    // بررسی وجود چت باز
+    let chat = await Chat.findOne({
+        users: { $all: [userId, targetId] },
+        endedAt: { $exists: false }
+    });
+
+    // اگر چت باز نبود → ایجاد چت جدید
+    if (!chat) {
+        chat = await Chat.create({ users: [userId, targetId], messages: [] });
+    }
+
     activeChats.set(Number(ctx.from.id), Number(targetId));
     activeChats.set(Number(targetId), Number(ctx.from.id));
     await ctx.reply("💬 چت با ادمین شروع شد. پیام‌ها مستقیم ارسال می‌شوند.");
@@ -824,9 +840,11 @@ bot.on("text", async (ctx) => {
 
 
     if (chatWith) {
-        // ذخیره پیام در Chat
+        // چت فعال موجود → پیام ذخیره و ارسال
         let chat = await Chat.findOne({ users: { $all: [user.telegramId, chatWith] }, endedAt: { $exists: false } });
         if (!chat) {
+            // اگر چت در DB وجود ندارد، یک چت جدید بساز
+
             chat = await Chat.create({ users: [user.telegramId, chatWith], messages: [] });
         }
         // ذخیره در دیتابیس
