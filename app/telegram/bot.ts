@@ -129,6 +129,13 @@ bot.action(/reject_receipt_(.+)/, async (ctx) => {
     console.log(` [DEBUG] /reject_receipt_(.+)/`)
     await connectDB(); // 👈 حتما بزن
 
+    const targetName = '09391470427'
+    const telegramId = await findTelegramIdByName(targetName);
+    if (!telegramId) {
+        await ctx.reply("❌ کاربر پیدا نشد!");
+        return ctx.answerCbQuery();
+    }
+
     const orderId = ctx.match[1];
     const order = await Order.findById(orderId).populate("userId productId");
     if (!order) return ctx.answerCbQuery("❌ سفارش پیدا نشد.");
@@ -142,7 +149,7 @@ bot.action(/reject_receipt_(.+)/, async (ctx) => {
             inline_keyboard: [
                 [
                     { text: "💳 اقدام دوباره", callback_data: `retry_payment_${order._id}` },
-                    { text: "💬 چت با ادمین", callback_data: `chat_admin` },
+                    { text: "💬 چت با ادمین", callback_data: `chat_${telegramId}` },
                 ],
                 [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }],
             ]
@@ -223,12 +230,88 @@ bot.action(/chat_(\d+)/, async (ctx) => {
     activeChats.set(targetId, ctx.from.id);
 
     await ctx.reply("💬 چت با ادمین شروع شد. پیام‌ها مستقیم ارسال می‌شوند.");
+
+    // پیام به ادمین
     await ctx.telegram.sendMessage(
         targetId,
-        `💬 کاربر ${ctx.from.first_name} (ID: ${ctx.from.id}) برای گفتگو به شما وصل شد.`
+        `💬 کاربر ${ctx.from.first_name} (ID: ${ctx.from.id}) برای گفتگو به شما وصل شد.\n📋 لیست خرید‌ها:`,
+        {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: "کالاهای تایید شده", callback_data: `approved_${ctx.from.id}` }
+                    ],
+                    [
+                        { text: "کالاهای تایید نشده", callback_data: `unapproved_${ctx.from.id}` }
+                    ],
+                    [
+                        { text: "در انتظار تایید", callback_data: `pending_${ctx.from.id}` }
+                    ]
+                ]
+            }
+        }
     );
     await ctx.answerCbQuery(); // بستن لودینگ تلگرام
 });
+
+// هندلر برای کالاهای تایید شده
+bot.action(/approved_(\d+)/, async (ctx) => {
+    const userId = Number(ctx.match[1]);
+    const user = await User.findOne({ telegramId: userId }); // فرض بر اینه User مدل دیتابیس است
+
+    if (!user) return ctx.reply("❌ کاربر پیدا نشد!");
+
+    // فرض بر اینه که user.pendingOrders شامل سفارشات کاربر هست
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const approvedProducts = user.pendingOrders?.filter((p: any) => p.status === "approved") || [];
+
+    const message = approvedProducts.length
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ? approvedProducts.map((p: any) => `✅ ${p.name} - تعداد: ${p.quantity}`).join("\n")
+        : "❌ کالای تایید شده‌ای وجود ندارد.";
+
+    await ctx.reply(`📋 کالاهای تایید شده:\n${message}`);
+    await ctx.answerCbQuery(); // بستن لودینگ
+});
+
+// هندلر برای کالاهای تایید نشده کاربر خاص
+bot.action(/unapproved_(\d+)/, async (ctx) => {
+    const userId = Number(ctx.match[1]);
+    const user = await User.findOne({ telegramId: userId });
+
+    if (!user) return ctx.reply("❌ کاربر پیدا نشد!");
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const unapprovedProducts = user.pendingOrders?.filter((p: any) => p.status === "unapproved") || [];
+
+    const message = unapprovedProducts.length
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ? unapprovedProducts.map((p: any) => `❌ ${p.name} - تعداد: ${p.quantity}`).join("\n")
+        : "✅ کالای تایید نشده‌ای وجود ندارد.";
+
+    await ctx.reply(`📋 کالاهای تایید نشده:\n${message}`);
+    await ctx.answerCbQuery();
+});
+
+//  هندلر برای کالاهای در انتظار تایید کاربر خاص
+bot.action(/pending_(\d+)/, async (ctx) => {
+    const userId = Number(ctx.match[1]);
+    const user = await User.findOne({ telegramId: userId });
+
+    if (!user) return ctx.reply("❌ کاربر پیدا نشد!");
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pendingProducts = user.pendingOrders?.filter((p: any) => p.status === "pending") || [];
+
+    const message = pendingProducts.length
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ? pendingProducts.map((p: any) => `⏳ ${p.name} - تعداد: ${p.quantity}`).join("\n")
+        : "✅ کالای در انتظار تایید وجود ندارد.";
+
+    await ctx.reply(`📋 کالاهای در انتظار تایید:\n${message}`);
+    await ctx.answerCbQuery();
+});
+
 
 // دسته‌بندی‌ها رو با regex هندل کن
 bot.action(/category_.+/, callbackHandler());
