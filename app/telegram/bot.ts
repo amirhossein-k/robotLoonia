@@ -580,10 +580,11 @@ bot.action("end_chat", async (ctx) => {
 
 
     // تابعی برای نمایش پروفایل کاربر
-    async function showProfile(targetId: number) {
+    async function showProfile(targetId: number, isAdmin = false) {
         const u = await User.findOne({ telegramId: targetId });
         if (!u) return;
 
+        // ارسال عکس‌ها
         const urls = Object.values(u.photos).filter(Boolean) as string[];
         if (urls.length > 0) {
             const media: InputMediaPhoto<string>[] = urls.map((url, idx) => ({
@@ -598,35 +599,28 @@ bot.action("end_chat", async (ctx) => {
 👤 پروفایل شما:
 
 📝 نام: ${u.name || "-"}
-🚻 جنسیت: ${u.gender || "-"}
 🎂 سن: ${u.age || "-"}
 📍 استان: ${u.province || "-"}
 🏙 شهر: ${u.city || "-"}
 `;
 
+        // دکمه مناسب
+        const keyboard = isAdmin
+            ? [[{ text: "⚙️ مدیریت فروشگاه", callback_data: "admin_menu" }]]
+            : [[{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }]];
+
         await ctx.telegram.sendMessage(targetId, profileText, {
-            reply_markup: {
-                inline_keyboard: [
-                    [{ text: "🖼 ویرایش عکس‌ها", callback_data: "edit_photos" }],
-                    [{ text: "✏️ ویرایش پروفایل", callback_data: "edit_profile" }],
-                    [
-                        {
-                            text: "🔍 جستجو بر اساس استان",
-                            callback_data: "search_by_province",
-                        },
-                    ],
-                    [{ text: "🎲 جستجوی تصادفی", callback_data: "search_random" }], [{ text: "💌 کسانی که مرا لایک کردند", callback_data: "liked_by_me" }],
-                ],
-            },
+            reply_markup: { inline_keyboard: keyboard },
         });
     }
 
     // اطلاع به هر دو طرف + بازگرداندن به پروفایل
     await ctx.reply("❌ شما چت را قطع کردید.");
-    await showProfile(user.telegramId);
+    await showProfile(user.telegramId, false); // کاربر
 
     await ctx.telegram.sendMessage(chatWith, `❌ کاربر ${user.name} چت را قطع کرد.`);
-    await showProfile(chatWith);
+    await showProfile(chatWith, true); // ادمین
+
 
 });
 
