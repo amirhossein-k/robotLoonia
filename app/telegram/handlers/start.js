@@ -27,12 +27,7 @@ export function startHandler() {
         {
           reply_markup: {
             inline_keyboard: [
-              [{ text: "محصولات", callback_data: "list" }],
-              [
-                { text: "پیگیری سفارش", callback_data: "peigiri" },
-                { text: "💬 چت با ادمین", callback_data: `chat_admin` },
-              ],
-              [{ text: "ادرس", callback_data: "address" }],
+              [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }],
             ],
           },
         }
@@ -58,10 +53,7 @@ export function startHandler() {
           {
             reply_markup: {
               inline_keyboard: [
-                [{ text: "محصولات", callback_data: "show_product" }],
-                [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
-                [{ text: "ادرس", callback_data: "address" }],
-                [{ text: "دسته بندی", callback_data: "category" }],
+                [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }],
               ],
             },
           }
