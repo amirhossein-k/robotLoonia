@@ -347,16 +347,17 @@ export function callbackHandler() {
     //   );
     // }
 
-    if (data.startsWith("chat_")) {
-      const buyerId = Number(data.replace("chat_", ""));
+    if (data.startsWith("chat_admin")) {
+      const adminId = 123456789; // آیدی تلگرام ادمین
       activeChats.set(ctx.from.id, buyerId);
       activeChats.set(buyerId, ctx.from.id);
 
       await ctx.reply("💬 چت با خریدار شروع شد. پیام‌ها مستقیم ارسال می‌شوند.");
       await ctx.telegram.sendMessage(
-        buyerId,
+        adminId,
         "💬 مدیر برای گفتگو به شما وصل شد."
       );
+      ctx.answerCbQuery(); // بستن لودینگ
     }
 
     //

@@ -194,7 +194,7 @@ bot.action("admin_menu", async (ctx) => {
     await ctx.answerCbQuery(); // برای بستن لودینگ تلگرام
 });
 bot.action("user_menu", async (ctx) => {
-    await ctx.reply("📌 منوی مدیریت:", {
+    await ctx.reply("📌 منوی فورشگاه:", {
         reply_markup: {
             inline_keyboard: [
                 [{ text: "محصولات", callback_data: "list" }],
@@ -214,7 +214,8 @@ bot.action(/category_.+/, callbackHandler());
 bot.action(/next_productsCategory_.+/, callbackHandler());
 bot.action(/prev_productsCategory_.+/, callbackHandler());
 // همچنین برای دکمه‌هایی که dynamic هستن:
-bot.action(/^(order_|approve_|reject_|chat_)\w+/, callbackHandler());
+bot.action(/^(order_|approve_|reject_)\w+/, callbackHandler());
+bot.action(`chat_admin`, callbackHandler());
 // ---- آپلود عکس ----
 // bot.on("photo", photoUploadHandler());
 // ---- نمایش پروفایل شخصی ----
@@ -341,44 +342,7 @@ bot.action(/show_profile_\d+/, async (ctx) => {
     });
 
 });
-// ---- در لایک ها شروع چت از طریق "قبول درخواست چت" ----
-bot.action(/start_chat_\d+/, async (ctx) => {
-    const chatWith = activeChats.get(ctx.from.id);
-    if (chatWith) {
-        return ctx.reply("❌ شما در حال حاضر در یک چت فعال هستید. برای دسترسی به پروفایل ابتدا چت را قطع کنید.");
-    }
-    await connectDB();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const targetId = Number((ctx.callbackQuery as any)?.data.replace("start_chat_", ""));
-    const user = await User.findOne({ telegramId: ctx.from.id });
-    const otherUser = await User.findOne({ telegramId: targetId });
-    if (!user || !otherUser) return ctx.reply("❌ کاربر پیدا نشد.");
 
-    // بررسی اینکه کسی در حال چت نباشه
-    if (activeChats.get(user.telegramId) || activeChats.get(otherUser.telegramId)) {
-        return ctx.reply("❌ یکی از شما در حال چت فعال است. لطفاً بعداً امتحان کنید.");
-    }
-
-    // ایجاد رکورد چت جدید
-    const newChat = await Chat.create({
-        users: [user.telegramId, otherUser.telegramId],
-        startedAt: new Date(),
-        messages: [],
-    });
-
-    // ثبت چت فعال
-    activeChats.set(user.telegramId, otherUser.telegramId);
-    activeChats.set(otherUser.telegramId, user.telegramId);
-
-    const keyboard = {
-        reply_markup: {
-            inline_keyboard: [[{ text: "❌ قطع ارتباط", callback_data: "end_chat" }]]
-        }
-    };
-
-    await ctx.reply(`✅ شما با ${otherUser.name} وارد چت شدید.`, keyboard);
-    await ctx.telegram.sendMessage(otherUser.telegramId, `✅ کاربر ${user.name} درخواست چت را قبول کرد.`, keyboard);
-});
 
 
 // دکمه قطع ارتباط
@@ -516,7 +480,7 @@ bot.on("text", async (ctx) => {
         // اطلاع به کاربر
         await ctx.telegram.sendMessage(
             trackingOrder.userId.telegramId,
-            `📦 سفارش شما ارسال شد.\n🛒 محصول: ${trackingOrder.productId.title}\n💰 مبلغ: ${trackingOrder.productId.price} تومان\n🔢 کد پیگیری: ${trackingCode}`,
+            `📦 سفارش شما ارسال شد.\n🛒 محصول: ${trackingOrder.productId.title}\n💰 مبلغ: ${trackingOrder.productId.price} تومان\n🔢 کد رهگیری پستی: ${trackingCode}`,
             {
                 reply_markup: {
                     inline_keyboard: [
