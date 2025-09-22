@@ -901,6 +901,7 @@ bot.on("photo", async (ctx) => {
             },
         });
 
+        await ctx.deleteMessage();
 
         // --- ارسال عکس به کاربر ناظر ---
         // const monitorId = 622650522; // Telegram ID ناظر
