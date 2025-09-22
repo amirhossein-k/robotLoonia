@@ -269,7 +269,6 @@ export function callbackHandler() {
                   },
                 ],
                 [{ text: "⚙️ منوی ادمین", callback_data: "admin_menu" }],
-                ,
               ],
             },
           }
