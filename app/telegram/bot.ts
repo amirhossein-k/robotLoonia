@@ -337,9 +337,8 @@ bot.action(/resume_(.+)/, async (ctx) => {
 // هندلر چت داینامیک
 bot.action(/chat_(\d+)/, async (ctx) => {
     const targetId = Number(ctx.match[1]); // ID ادمین از callback_data گرفته می‌شود
-    activeChats.set(ctx.from.id, targetId);
-    activeChats.set(targetId, ctx.from.id);
-
+    activeChats.set(Number(ctx.from.id), Number(targetId));
+    activeChats.set(Number(targetId), Number(ctx.from.id));
     await ctx.reply("💬 چت با ادمین شروع شد. پیام‌ها مستقیم ارسال می‌شوند.");
 
     // پیام به ادمین
@@ -825,20 +824,32 @@ bot.on("text", async (ctx) => {
 
     // آیا کاربر در حال چت هست؟
     const chatWith = activeChats.get(user.telegramId);
+    // const chatWith = activeChats.get(Number(ctx.from.id));
+
     const message = ctx.message.text;
 
 
     if (chatWith) {
-
+        // ذخیره پیام در Chat
+        let chat = await Chat.findOne({ users: { $all: [user.telegramId, chatWith] }, endedAt: { $exists: false } });
+        if (!chat) {
+            chat = await Chat.create({ users: [user.telegramId, chatWith], messages: [] });
+        }
         // ذخیره در دیتابیس
-        await Message.create({
+        chat.messages.push({
             from: user.telegramId,
             to: chatWith,
-            text: message,
-            type: "text"
+            text: ctx.message.text,
+            type: "text",
+            createdAt: new Date()
         });
+        await chat.save();
         //ارسال پیام به طرف مقابل
-        await ctx.telegram.sendMessage(chatWith, `💬 ${user.name}: ${message}`);
+        await ctx.telegram.sendMessage(chatWith, `💬 ${user.name}: ${message}`, {
+            reply_markup: {
+                inline_keyboard: [[{ text: "❌ قطع ارتباط", callback_data: "end_chat" }]]
+            }
+        });
     } else {
         // پیام متنی (اسم، سن و ...)
 
@@ -853,7 +864,7 @@ bot.on("photo", async (ctx) => {
     const user = await User.findOne({ telegramId: ctx.from.id });
     if (!user) return;
 
-    const chatWith = activeChats.get(user.telegramId);
+    const chatWith = activeChats.get(Number(user.telegramId));
     // ارسال به طرف مقابل اگر چت فعال است
     // 📌 کاربر در حال چت است → عکس را بفرست به طرف مقابل
     const photo = ctx.message.photo[ctx.message.photo.length - 1];
@@ -861,17 +872,23 @@ bot.on("photo", async (ctx) => {
 
     // 1️⃣ اگر کاربر در حال چت است
     if (chatWith) {
-
-        await Message.create({
+        let chat = await Chat.findOne({ users: { $all: [user.telegramId, chatWith] }, endedAt: { $exists: false } });
+        if (!chat) chat = await Chat.create({ users: [user.telegramId, chatWith], messages: [] });
+        chat.messages.push({
             from: user.telegramId,
             to: chatWith,
-            fileId,
+            photo: fileId,
             type: "photo",
+            createdAt: new Date()
         });
+        await chat.save();
+
 
         // ارسال به طرف مقابل
         await ctx.telegram.sendPhoto(chatWith, fileId, {
-            caption: `📷 تصویر جدید از ${user.name}`,
+            caption: `📷 تصویر جدید از ${user.name}`, reply_markup: {
+                inline_keyboard: [[{ text: "❌ قطع ارتباط", callback_data: "end_chat" }]]
+            },
         });
         return; // 👈 اینجا return بزن
 
@@ -943,7 +960,7 @@ bot.action("edit_personal", async (ctx) => {
 // استفاده در command
 
 bot.command("end_chat", async (ctx) => {
-    const chatWith = activeChats.get(ctx.from.id);
+    const chatWith = activeChats.get(Number(ctx.from.id));
     if (!chatWith) return ctx.reply("❌ شما در حال حاضر در چت فعال نیستید.");
     await connectDB();
     await Chat.updateOne(
