@@ -8,6 +8,7 @@ import Order from "@/app/model/Order";
 import Product from "@/app/model/product";
 import { ADMIN_PHONE } from "./start";
 import { productsCategoryHandler } from "@/app/telegram/handlers/categoryProduct";
+import { findTelegramIdByName } from "@/app/utiles/morethan";
 
 export function callbackHandler() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -347,18 +348,18 @@ export function callbackHandler() {
     //   );
     // }
 
-    if (data.startsWith("chat_admin")) {
-      const adminId = 123456789; // آیدی تلگرام ادمین
-      activeChats.set(ctx.from.id, buyerId);
-      activeChats.set(buyerId, ctx.from.id);
+    // if (data.startsWith("chat_admin")) {
 
-      await ctx.reply("💬 چت با خریدار شروع شد. پیام‌ها مستقیم ارسال می‌شوند.");
-      await ctx.telegram.sendMessage(
-        adminId,
-        "💬 مدیر برای گفتگو به شما وصل شد."
-      );
-      ctx.answerCbQuery(); // بستن لودینگ
-    }
+    //   activeChats.set(ctx.from.id, buyerId);
+    //   activeChats.set(buyerId, ctx.from.id);
+
+    //   await ctx.reply("💬 چت با خریدار شروع شد. پیام‌ها مستقیم ارسال می‌شوند.");
+    //   await ctx.telegram.sendMessage(
+    //     adminId,
+    //     "💬 مدیر برای گفتگو به شما وصل شد."
+    //   );
+    //   ctx.answerCbQuery(); // بستن لودینگ
+    // }
 
     //
   };

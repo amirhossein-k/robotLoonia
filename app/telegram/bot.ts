@@ -15,6 +15,7 @@ import Chat from "../model/Chat";
 import { getProvinceKeyboard, provinces } from "../lib/provinces";
 import { cities, getCityKeyboard } from "../lib/cities";
 import Order from "../model/Order";
+import { findTelegramIdByName } from "../utiles/morethan";
 const activeChats = new Map<number, number>();
 const editState = new Map<number, "about" | "searching" | "interests" | "name" | "age">();
 
@@ -194,19 +195,39 @@ bot.action("admin_menu", async (ctx) => {
     await ctx.answerCbQuery(); // برای بستن لودینگ تلگرام
 });
 bot.action("user_menu", async (ctx) => {
+    const targetName = '09391470427'
+    const telegramId = findTelegramIdByName(targetName);
+    if (!telegramId) {
+        await ctx.reply("❌ کاربر پیدا نشد!");
+        return ctx.answerCbQuery();
+    }
+
     await ctx.reply("📌 منوی فورشگاه:", {
         reply_markup: {
             inline_keyboard: [
                 [{ text: "محصولات", callback_data: "list" }],
                 [
                     { text: "پیگیری سفارش", callback_data: "peigiri" },
-                    { text: "💬 چت با ادمین", callback_data: `chat_admin` },
+                    { text: "💬 چت با ادمین", callback_data: `chat_${telegramId}` },
                 ],
                 [{ text: "ادرس", callback_data: "address" }],
             ],
         },
     });
     await ctx.answerCbQuery(); // برای بستن لودینگ تلگرام
+});
+// هندلر چت داینامیک
+bot.action(/chat_(\d+)/, async (ctx) => {
+    const targetId = Number(ctx.match[1]); // ID ادمین از callback_data گرفته می‌شود
+    activeChats.set(ctx.from.id, targetId);
+    activeChats.set(targetId, ctx.from.id);
+
+    await ctx.reply("💬 چت با ادمین شروع شد. پیام‌ها مستقیم ارسال می‌شوند.");
+    await ctx.telegram.sendMessage(
+        targetId,
+        `💬 کاربر ${ctx.from.first_name} (ID: ${ctx.from.id}) برای گفتگو به شما وصل شد.`
+    );
+    await ctx.answerCbQuery(); // بستن لودینگ تلگرام
 });
 
 // دسته‌بندی‌ها رو با regex هندل کن
@@ -215,7 +236,7 @@ bot.action(/next_productsCategory_.+/, callbackHandler());
 bot.action(/prev_productsCategory_.+/, callbackHandler());
 // همچنین برای دکمه‌هایی که dynamic هستن:
 bot.action(/^(order_|approve_|reject_)\w+/, callbackHandler());
-bot.action(`chat_admin`, callbackHandler());
+// bot.action(`chat_admin`, callbackHandler());
 // ---- آپلود عکس ----
 // bot.on("photo", photoUploadHandler());
 // ---- نمایش پروفایل شخصی ----

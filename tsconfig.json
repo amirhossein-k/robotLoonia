@@ -33,6 +33,7 @@
     "app/telegram/handlers/photo.js",
     "app/telegram/handlers/callback.js",
     "app/telegram/handlers/products.js",
+    "app/utiles/morethan.js",
     "scripts/seedUsers.mts"
   ],
   "exclude": ["node_modules"]
