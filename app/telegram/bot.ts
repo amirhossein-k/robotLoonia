@@ -152,6 +152,8 @@ bot.action(/reject_receipt_(.+)/, async (ctx) => {
 });
 // دکمه اقدام دوباره
 bot.action(/retry_payment_(.+)/, async (ctx) => {
+    await connectDB(); // 👈 اینو یادت رفته بود
+
     console.log(`[DEBUG] /retry_payment_(.+)/`)
     const orderId = ctx.match[1];
     const order = await Order.findById(orderId);
