@@ -196,7 +196,7 @@ bot.action("admin_menu", async (ctx) => {
 });
 bot.action("user_menu", async (ctx) => {
     const targetName = '09391470427'
-    const telegramId = findTelegramIdByName(targetName);
+    const telegramId = await findTelegramIdByName(targetName);
     if (!telegramId) {
         await ctx.reply("❌ کاربر پیدا نشد!");
         return ctx.answerCbQuery();
