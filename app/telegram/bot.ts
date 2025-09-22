@@ -208,21 +208,132 @@ bot.action("user_menu", async (ctx) => {
         await ctx.reply("❌ کاربر پیدا نشد!");
         return ctx.answerCbQuery();
     }
+    await connectDB();
 
-    await ctx.reply("📌 منوی فورشگاه:", {
-        reply_markup: {
-            inline_keyboard: [
-                [{ text: "محصولات", callback_data: "list" }],
-                [
-                    { text: "پیگیری سفارش", callback_data: "peigiri" },
-                    { text: "💬 چت با ادمین", callback_data: `chat_${telegramId}` },
-                ],
-                [{ text: "ادرس", callback_data: "address" }],
-            ],
-        },
+    // 🟢 یوزر فعلی
+    const userTelegramId = ctx.from.id;
+    const user = await User.findOne({ telegramId: userTelegramId });
+
+    // 🟢 سفارش آخر کاربر
+    const lastOrder = await Order.findOne({ userId: user._id }).sort({ createdAt: -1 });
+
+
+    // دکمه‌های پیش‌فرض
+    const buttons = [
+        [{ text: "محصولات", callback_data: "list" }],
+        [
+            { text: "پیگیری سفارش", callback_data: "peigiri" },
+            { text: "💬 چت با ادمین", callback_data: `chat_${telegramId}` },
+        ],
+        [{ text: "آدرس", callback_data: "address" }],
+    ];
+    // 🟢 فقط اگر سفارش هست و وضعیتش approved نیست
+    if (lastOrder && lastOrder.status !== "approved") {
+        buttons.push([
+            { text: "🔙 ادامه فرایند قبلی", callback_data: `resume_${lastOrder._id}` }
+        ]);
+        buttons.push([
+            { text: "❌ لغو سفارش", callback_data: `cancel_${lastOrder._id}` }
+        ]);
+    }
+
+
+
+    await ctx.reply("📌 منوی فروشگاه:", {
+        reply_markup: { inline_keyboard: buttons },
     });
+
     await ctx.answerCbQuery(); // برای بستن لودینگ تلگرام
 });
+
+bot.action(/cancel_(.+)/, async (ctx) => {
+    await connectDB();
+
+    const orderId = ctx.match[1];
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+        await ctx.reply("❌ سفارش پیدا نشد!");
+        return ctx.answerCbQuery();
+    }
+
+    if (order.status === "approved") {
+        await ctx.reply("✅ این سفارش قبلاً تأیید شده و قابل لغو نیست.");
+        return ctx.answerCbQuery();
+    }
+
+    // حذف سفارش از دیتابیس
+    await Order.deleteOne({ _id: orderId });
+
+    await ctx.reply("❌ سفارش شما با موفقیت لغو شد.");
+    await ctx.answerCbQuery();
+});
+
+bot.action(/resume_(.+)/, async (ctx) => {
+    await connectDB();
+
+    const orderId = ctx.match[1];
+
+    const order = await Order.findById(orderId).populate("productId userId");
+    if (!order) {
+        await ctx.reply("❌ سفارش پیدا نشد!");
+        return ctx.answerCbQuery();
+    }
+
+
+
+    const targetName = '09391470427'
+    const telegramId = await findTelegramIdByName(targetName);
+    if (!telegramId) {
+        await ctx.reply("❌ کاربر پیدا نشد!");
+        return ctx.answerCbQuery();
+    }
+
+
+
+    // بررسی وضعیت سفارش و ادامه فرایند
+    switch (order.status) {
+        case "awaiting_payment":
+            await ctx.reply(
+                "💳 سفارش شما هنوز در انتظار پرداخت است.\nلطفاً فیش واریزی را ارسال کنید."
+            );
+            break;
+
+        case "payment_rejected":
+            await ctx.reply(
+                "❌ فیش پرداختی قبلی شما رد شد.\nلطفاً دوباره اقدام کنید.",
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: "💬 چت با ادمین", callback_data: `chat_${telegramId}` },
+                                { text: "💳 اقدام دوباره", callback_data: `retry_payment_${order._id}` }
+                            ],
+                            [
+                                { text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }
+                            ]
+                        ]
+                    }
+                }
+            );
+            break;
+
+        case "awaiting_tracking_code":
+            await ctx.reply(
+                "📦 سفارش شما تایید شده است و منتظر دریافت کد رهگیری می‌باشد."
+            );
+            break;
+
+        default:
+            await ctx.reply(
+                `📌 وضعیت سفارش شما: ${order.status}\nاین مرحله قابل ادامه دادن نیست.`
+            );
+            break;
+    }
+
+    await ctx.answerCbQuery(); // بستن لودینگ
+});
+
 // هندلر چت داینامیک
 bot.action(/chat_(\d+)/, async (ctx) => {
     const targetId = Number(ctx.match[1]); // ID ادمین از callback_data گرفته می‌شود
