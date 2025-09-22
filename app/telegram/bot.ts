@@ -389,11 +389,14 @@ bot.action(/approved_(\d+)/, async (ctx) => {
 
     // فرض بر اینه که user.pendingOrders شامل سفارشات کاربر هست
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const approvedProducts = user.pendingOrders?.filter((p: any) => p.status === "approved") || [];
+    // فچ کردن سفارشات تایید شده از مدل Order
+    const approvedOrders = await Order.find({
+        userId: user._id,
+        status: "approved"
+    }).populate("productId"); // اگر میخوای نام محصول را هم داشته باشی
 
-    const message = approvedProducts.length
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ? approvedProducts.map((p: any) => `✅ ${p.name} - تعداد: ${p.quantity}`).join("\n")
+    const message = approvedOrders.length
+        ? approvedOrders.map((o) => `✅ ${o.productId.title} - تعداد: ${o.quantity || 1}`).join("\n")
         : "❌ کالای تایید شده‌ای وجود ندارد.";
 
     await ctx.reply(`📋 کالاهای تایید شده:\n${message}`);
@@ -408,12 +411,13 @@ bot.action(/unapproved_(\d+)/, async (ctx) => {
     if (!user) return ctx.reply("❌ کاربر پیدا نشد!");
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const unapprovedProducts = user.pendingOrders?.filter((p: any) => p.status === "unapproved") || [];
-
-    const message = unapprovedProducts.length
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ? unapprovedProducts.map((p: any) => `❌ ${p.name} - تعداد: ${p.quantity}`).join("\n")
-        : "✅ کالای تایید نشده‌ای وجود ندارد.";
+    const approvedOrders = await Order.find({
+        userId: user._id,
+        status: "rejected"
+    }).populate("productId"); // اگر میخوای نام محصول را هم داشته باشی
+    const message = approvedOrders.length
+        ? approvedOrders.map((o) => `✅ ${o.productId.title} - تعداد: ${o.quantity || 1}`).join("\n")
+        : "❌ کالای تایید شده‌ای وجود ندارد.";
 
     await ctx.reply(`📋 کالاهای تایید نشده:\n${message}`);
     await ctx.answerCbQuery();
@@ -427,12 +431,14 @@ bot.action(/pending_(\d+)/, async (ctx) => {
     if (!user) return ctx.reply("❌ کاربر پیدا نشد!");
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pendingProducts = user.pendingOrders?.filter((p: any) => p.status === "pending") || [];
+    const pendingProducts = await Order.find({
+        userId: user._id,
+        status: "pending"
+    }).populate("productId"); // اگر میخوای نام محصول را هم داشته باشی
 
     const message = pendingProducts.length
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ? pendingProducts.map((p: any) => `⏳ ${p.name} - تعداد: ${p.quantity}`).join("\n")
-        : "✅ کالای در انتظار تایید وجود ندارد.";
+        ? pendingProducts.map((o) => `✅ ${o.productId.title} - تعداد: ${o.quantity || 1}`).join("\n")
+        : "❌ کالای تایید شده‌ای وجود ندارد.";
 
     await ctx.reply(`📋 کالاهای در انتظار تایید:\n${message}`);
     await ctx.answerCbQuery();
