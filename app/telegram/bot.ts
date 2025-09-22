@@ -156,7 +156,7 @@ bot.action(/retry_payment_(.+)/, async (ctx) => {
 
     console.log(`[DEBUG] /retry_payment_(.+)/`)
     const orderId = ctx.match[1];
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(orderId).populate("userId productId");;
     if (!order) return ctx.answerCbQuery("❌ سفارش پیدا نشد.");
 
     order.status = "awaiting_payment"; // وضعیت دوباره آماده بررسی
