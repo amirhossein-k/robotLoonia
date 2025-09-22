@@ -125,6 +125,7 @@ bot.action(/confirm_receipt_(.+)/, async (ctx) => {
 });
 
 bot.action(/reject_receipt_(.+)/, async (ctx) => {
+    console.log(` [DEBUG] /reject_receipt_(.+)/`)
     await connectDB(); // 👈 حتما بزن
 
     const orderId = ctx.match[1];
@@ -140,7 +141,7 @@ bot.action(/reject_receipt_(.+)/, async (ctx) => {
             inline_keyboard: [
                 [
                     { text: "💳 اقدام دوباره", callback_data: `retry_payment_${order._id}` },
-                    { text: "💬 چت با ادمین", callback_data: `chat_admin` }
+                    { text: "💬 چت با ادمین", callback_data: `chat_admin` },
                 ],
                 [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }],
             ]
@@ -151,6 +152,7 @@ bot.action(/reject_receipt_(.+)/, async (ctx) => {
 });
 // دکمه اقدام دوباره
 bot.action(/retry_payment_(.+)/, async (ctx) => {
+    console.log(`[DEBUG] /retry_payment_(.+)/`)
     const orderId = ctx.match[1];
     const order = await Order.findById(orderId);
     if (!order) return ctx.answerCbQuery("❌ سفارش پیدا نشد.");
