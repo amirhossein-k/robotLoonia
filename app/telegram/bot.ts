@@ -420,8 +420,9 @@ bot.action(/unapproved_(\d+)/, async (ctx) => {
         status: "rejected"
     }).populate("productId"); // اگر میخوای نام محصول را هم داشته باشی
     const message = unapprovedOrders.length
-        ? unapprovedOrders.map((o) => `✅ ${o.productId.title} - تعداد: ${o.quantity || 1}`).join("\n")
-        : "❌ کالای رد شده نداریم.";
+        ? unapprovedOrders.map((o) => `❌ ${o.productId.title} - تعداد: ${o.quantity || 1}`).join("\n")
+        : "❌ کالای تایید نشده‌ای وجود ندارد.";
+
 
     await ctx.reply(`📋 کالاهای تایید نشده:\n${message}`);
     await ctx.answerCbQuery();
