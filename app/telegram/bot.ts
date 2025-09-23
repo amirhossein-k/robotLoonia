@@ -382,6 +382,8 @@ bot.action(/chat_(\d+)/, async (ctx) => {
 
 // هندلر برای کالاهای تایید شده
 bot.action(/approved_(\d+)/, async (ctx) => {
+    console.log(`[DEBUG] /approved_(\d+)/`);
+
     await connectDB();
 
     const userId = Number(ctx.match[1]);
@@ -407,6 +409,7 @@ bot.action(/approved_(\d+)/, async (ctx) => {
 
 // هندلر برای کالاهای تایید نشده کاربر خاص
 bot.action(/unapproved_(\d+)/, async (ctx) => {
+    console.log(`[DEBUG] /unapproved_(\d+)/`);
     await connectDB();
 
     const userId = Number(ctx.match[1]);
@@ -430,6 +433,8 @@ bot.action(/unapproved_(\d+)/, async (ctx) => {
 
 //  هندلر برای کالاهای در انتظار تایید کاربر خاص
 bot.action(/pending_(\d+)/, async (ctx) => {
+    console.log(`[DEBUG] /pending_(\d+)/`);
+
     await connectDB();
 
     const userId = Number(ctx.match[1]);
@@ -675,6 +680,12 @@ setInterval(async () => {
 
 // ارسال پیام
 bot.on("text", async (ctx) => {
+    const targetName = '09391470427'
+    const telegramId = await findTelegramIdByName(targetName);
+    if (!telegramId) {
+        await ctx.reply("❌ کاربر پیدا نشد!");
+        return ctx.answerCbQuery();
+    }
 
     await connectDB();
 
@@ -695,7 +706,7 @@ bot.on("text", async (ctx) => {
             {
                 reply_markup: {
                     inline_keyboard: [
-                        [{ text: "💬 چت با پشتیبانی", callback_data: "chat_admin" }],
+                        [{ text: "💬 چت با پشتیبانی", callback_data: `chat_${telegramId}` }],
                         [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }]
                     ]
                 }
