@@ -881,7 +881,7 @@ bot.on("text", async (ctx) => {
         });
         await chat.save();
         //ارسال پیام به طرف مقابل
-        await ctx.telegram.sendMessage(chatWith, `💬 ${user.name}: ${message}`, {
+        await ctx.telegram.sendMessage(chatWith, `💬 ${user.name === targetName ? 'ادمین' : user.name}: ${message}`, {
             reply_markup: {
                 inline_keyboard: [[{ text: "❌ قطع ارتباط", callback_data: "end_chat" }]]
             }
