@@ -381,7 +381,7 @@ bot.action(/chat_(\d+)/, async (ctx) => {
 });
 
 // هندلر برای کالاهای تایید شده
-bot.action(/approved_(\d+)/, async (ctx) => {
+bot.action(/^approved_(\d+)$/, async (ctx) => {
     console.log(`[DEBUG] /approved_(\d+)/`);
 
     await connectDB();
@@ -408,7 +408,7 @@ bot.action(/approved_(\d+)/, async (ctx) => {
 });
 
 // هندلر برای کالاهای تایید نشده کاربر خاص
-bot.action(/unapproved_(\d+)/, async (ctx) => {
+bot.action(/^unapproved_(\d+)$/, async (ctx) => {
     console.log(`[DEBUG] /unapproved_(\d+)/`);
     await connectDB();
 
@@ -432,7 +432,7 @@ bot.action(/unapproved_(\d+)/, async (ctx) => {
 });
 
 //  هندلر برای کالاهای در انتظار تایید کاربر خاص
-bot.action(/pending_(\d+)/, async (ctx) => {
+bot.action(/^pending_(\d+)$/, async (ctx) => {
     console.log(`[DEBUG] /pending_(\d+)/`);
 
     await connectDB();
