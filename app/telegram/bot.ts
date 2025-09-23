@@ -382,6 +382,8 @@ bot.action(/chat_(\d+)/, async (ctx) => {
 
 // هندلر برای کالاهای تایید شده
 bot.action(/approved_(\d+)/, async (ctx) => {
+    await connectDB();
+
     const userId = Number(ctx.match[1]);
     const user = await User.findOne({ telegramId: userId }); // فرض بر اینه User مدل دیتابیس است
 
@@ -405,19 +407,21 @@ bot.action(/approved_(\d+)/, async (ctx) => {
 
 // هندلر برای کالاهای تایید نشده کاربر خاص
 bot.action(/unapproved_(\d+)/, async (ctx) => {
+    await connectDB();
+
     const userId = Number(ctx.match[1]);
     const user = await User.findOne({ telegramId: userId });
 
     if (!user) return ctx.reply("❌ کاربر پیدا نشد!");
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const approvedOrders = await Order.find({
+    const unapprovedOrders = await Order.find({
         userId: user._id,
         status: "rejected"
     }).populate("productId"); // اگر میخوای نام محصول را هم داشته باشی
-    const message = approvedOrders.length
-        ? approvedOrders.map((o) => `✅ ${o.productId.title} - تعداد: ${o.quantity || 1}`).join("\n")
-        : "❌ کالای تایید شده‌ای وجود ندارد.";
+    const message = unapprovedOrders.length
+        ? unapprovedOrders.map((o) => `✅ ${o.productId.title} - تعداد: ${o.quantity || 1}`).join("\n")
+        : "❌ کالای رد شده نداریم.";
 
     await ctx.reply(`📋 کالاهای تایید نشده:\n${message}`);
     await ctx.answerCbQuery();
@@ -425,6 +429,8 @@ bot.action(/unapproved_(\d+)/, async (ctx) => {
 
 //  هندلر برای کالاهای در انتظار تایید کاربر خاص
 bot.action(/pending_(\d+)/, async (ctx) => {
+    await connectDB();
+
     const userId = Number(ctx.match[1]);
     const user = await User.findOne({ telegramId: userId });
 
@@ -438,7 +444,7 @@ bot.action(/pending_(\d+)/, async (ctx) => {
 
     const message = pendingProducts.length
         ? pendingProducts.map((o) => `✅ ${o.productId.title} - تعداد: ${o.quantity || 1}`).join("\n")
-        : "❌ کالای تایید شده‌ای وجود ندارد.";
+        : "❌ کالای در انتظار تایید وجود ندارد.";
 
     await ctx.reply(`📋 کالاهای در انتظار تایید:\n${message}`);
     await ctx.answerCbQuery();
