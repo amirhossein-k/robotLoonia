@@ -341,7 +341,7 @@ bot.action(/chat_(\d+)/, async (ctx) => {
 
     const targetId = Number(ctx.match[1]); // ID ادمین از callback_data گرفته می‌شود
 
-
+    // fvdvd
     // بررسی وجود چت باز
     let chat = await Chat.findOne({
         users: { $all: [userId, targetId] },
