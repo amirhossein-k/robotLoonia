@@ -801,6 +801,7 @@ bot.on("text", async (ctx) => {
         ادرس پستی :  ${user.postalAddress || "-"}
         کد پستی :  ${user.postalCode || "-"}
 
+        اگر اشتباه ثبت کردید قبل ثبت سفارش خرید از طریق دکمه منوی فروشگاه بعد ادرس نسبت به تغییر ان اقدام کنید
         `;
         // const buttons = [
         //     [{ text: "پروفایل", callback_data: "edit_photos" }],
