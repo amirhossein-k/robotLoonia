@@ -66,19 +66,7 @@ bot.action(/approve_product_(.+)/, async (ctx) => {
     order.status = "awaiting_payment";
     await order.save();
 
-    // پاک کردن همه پیام‌های کاربر
-    const orders = await Order.find({ userId: order.userId });
-    for (const o of orders) {
-        if (o.adminMessageId) {
-            try {
-                await ctx.telegram.deleteMessage(ctx.chat!.id, o.adminMessageId);
-                o.adminMessageId = undefined; // پاک کردن شناسه پیام
-                await o.save();
-            } catch (err) {
-                console.error("❌ خطا در حذف پیام:", err);
-            }
-        }
-    }
+
 
     // پیام به کاربر
 
@@ -111,19 +99,6 @@ bot.action(/reject_product_(.+)/, async (ctx) => {
     order.rejectReasonAdminId = ctx.from.id;
     await order.save();
 
-    // پاک کردن همه پیام‌های کاربر
-    const orders = await Order.find({ userId: order.userId });
-    for (const o of orders) {
-        if (o.adminMessageId) {
-            try {
-                await ctx.telegram.deleteMessage(ctx.chat!.id, o.adminMessageId);
-                o.adminMessageId = undefined;
-                await o.save();
-            } catch (err) {
-                console.error("❌ خطا در حذف پیام:", err);
-            }
-        }
-    }
 
     console.log(`[DEBUG] ${waitingForRejectReason} - ذخیره سفارش در حالت انتظار دلیل`)
     await ctx.reply("لطفا دلیل رد کردن محصول را بنویسید:");
@@ -160,29 +135,19 @@ bot.action(/confirm_receipt_(.+)/, async (ctx) => {
     }
     );
     // حذف پیام رسید از چت ادمین
-    // try {
-    //     if (ctx.chat && order.adminMessageId) {
-    //         await ctx.telegram.deleteMessage(ctx.chat.id, order.adminMessageId);
-    //     }
-
-    // } catch (e) {
-    //     console.error("❌ خطا در حذف پیام رسید:", e);
-    // }
-    // پاک کردن همه پیام‌های کاربر
-    const orders = await Order.find({ userId: order.userId });
-    for (const o of orders) {
-        if (o.adminMessageId) {
-            try {
-                await ctx.telegram.deleteMessage(ctx.chat!.id, o.adminMessageId);
-                o.adminMessageId = undefined;
-                await o.save();
-            } catch (err) {
-                console.error("❌ خطا در حذف پیام:", err);
-            }
+    // هنگام تایید محصول یا رسید
+    if (ctx.chat && order.adminMessageId) {
+        try {
+            await ctx.telegram.deleteMessage(ctx.chat.id, order.adminMessageId);
+            order.adminMessageId = undefined;
+            await order.save();
+        } catch (err) {
+            console.error("❌ خطا در حذف پیام ادمین:", err);
         }
     }
+
     // پاک کردن پیام از چت ادمین
-    await ctx.deleteMessage();
+    // await ctx.deleteMessage();
     await ctx.answerCbQuery("فیش تایید شد.");
 });
 
@@ -204,17 +169,14 @@ bot.action(/reject_receipt_(.+)/, async (ctx) => {
     order.status = "payment_rejected";
     await order.save();
 
-    // پاک کردن همه پیام‌های کاربر
-    const orders = await Order.find({ userId: order.userId });
-    for (const o of orders) {
-        if (o.adminMessageId) {
-            try {
-                await ctx.telegram.deleteMessage(ctx.chat!.id, o.adminMessageId);
-                o.adminMessageId = undefined;
-                await o.save();
-            } catch (err) {
-                console.error("❌ خطا در حذف پیام:", err);
-            }
+    // هنگام تایید محصول یا رسید
+    if (ctx.chat && order.adminMessageId) {
+        try {
+            await ctx.telegram.deleteMessage(ctx.chat.id, order.adminMessageId);
+            order.adminMessageId = undefined;
+            await order.save();
+        } catch (err) {
+            console.error("❌ خطا در حذف پیام ادمین:", err);
         }
     }
     await ctx.telegram.sendMessage(order.userId.telegramId, `❌ فیش واریزی شما تایید نشد. لطفا دوباره اقدام کنید.`, {
@@ -509,13 +471,23 @@ ${order.paymentReceipt ? "📑 رسید پرداخت: ✅ دارد" : "📑 رس
 
         ];
 
-
+        if (order.paymentReceipt) {
+            // اگر رسید وجود داشت، عکس را همراه متن ارسال کن
+            await ctx.replyWithPhoto(order.paymentReceipt, {
+                caption: text,
+                reply_markup: { inline_keyboard: keyboard },
+            });
+        } else {
+            // اگر رسید وجود نداشت، فقط متن ارسال شود
+            await ctx.reply(text, {
+                reply_markup: { inline_keyboard: keyboard },
+            });
+        }
         // 📌 پیام ارسال کن و message_id ذخیره کن
-        const sent = await ctx.reply(text, {
-            reply_markup: { inline_keyboard: keyboard },
-        });
-        order.adminMessageId = sent.message_id; // ذخیره توی سفارش
-        await order.save();
+        // ctx.reply(text, {
+        //     reply_markup: { inline_keyboard: keyboard },
+        // });
+
     }
     await ctx.answerCbQuery();
 });
@@ -1351,7 +1323,7 @@ bot.on("photo", async (ctx) => {
         await pendingOrder.save();
 
 
-        await ctx.deleteMessage();
+        // await ctx.deleteMessage();
 
         // --- ارسال عکس به کاربر ناظر ---
         // const monitorId = 622650522; // Telegram ID ناظر
