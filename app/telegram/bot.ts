@@ -8,7 +8,7 @@ import { connectDB } from "../lib/mongodb";
 import User from "../model/User";
 import { InputMedia, InputMediaPhoto, CallbackQuery } from "typegram";
 import { searchHandler, userSearchIndex, userSearchResults } from "./handlers/searchHandler";
-import Product from "@/app/model/product";
+import Product, { IProduct } from "@/app/model/product";
 
 import Message from "@/app/model/Message";
 import Chat from "../model/Chat";
@@ -950,6 +950,8 @@ bot.on("photo", async (ctx) => {
                 inline_keyboard: [
                     [{ text: "✅ تایید رسید", callback_data: `confirm_receipt_${pendingOrder._id}` }],
                     [{ text: "❌ رد رسید", callback_data: `reject_receipt_${pendingOrder._id}` }],
+                    [{ text: "📦 مشاهده محصول", callback_data: `view_product_${pendingOrder._id}` }], // ⬅️ اینو اضافه کردیم
+
                     [{ text: "⚙️ منوی ادمین", callback_data: "admin_menu" }],
                 ],
             },
@@ -990,6 +992,52 @@ bot.action("edit_personal", async (ctx) => {
     })
 
 })
+
+// هندلر نمایش محصول سفارش
+bot.action(/^view_product_(.+)$/, async (ctx) => {
+    await connectDB();
+
+    const orderId = ctx.match[1];
+    const order = await Order.findById(orderId)
+        .populate("productId")
+        .populate("userId");
+
+    if (!order) {
+        return ctx.reply("❌ سفارش پیدا نشد!");
+    }
+
+    const product = order.productId as IProduct;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const user = order.userId as any;
+
+    // اگر محصول عکس داشته باشد
+    if (product.photoUrl) {
+        await ctx.replyWithPhoto(product.photoUrl, {
+            caption:
+                `📦 اطلاعات محصول سفارش:\n\n` +
+                `🛒 نام محصول: ${product.title}\n` +
+                `💰 قیمت: ${product.price} تومان\n` +
+                (product.size ? `📏 سایز: ${product.size}\n` : "") +
+                `🔢 تعداد: ${order.trackingCode ? order.trackingCode : order.quantity || 1}\n\n` +
+                `👤 کاربر: ${user?.name || "-"} (ID: ${user?.telegramId || "-"})\n` +
+                `📅 تاریخ سفارش: ${order.createdAt.toLocaleString("fa-IR")}`
+        });
+    } else {
+        await ctx.reply(
+            `📦 اطلاعات محصول سفارش:\n\n` +
+            `🛒 نام محصول: ${product.title}\n` +
+            `💰 قیمت: ${product.price} تومان\n` +
+            (product.size ? `📏 سایز: ${product.size}\n` : "") +
+            `🔢 تعداد: ${order.trackingCode ? order.trackingCode : order.quantity || 1}\n\n` +
+            `👤 کاربر: ${user?.name || "-"} (ID: ${user?.telegramId || "-"})\n` +
+            `📅 تاریخ سفارش: ${order.createdAt.toLocaleString("fa-IR")}`
+        );
+    }
+
+    await ctx.answerCbQuery();
+});
+
+
 
 // commands
 
