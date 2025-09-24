@@ -14,8 +14,9 @@ export interface IOrder extends Document {
 
     stausReject: boolean
     trackingCode: string;       //
-    awaitingTrackingCode: boolean,
+    awaitingTrackingCode: boolean;
     trackingAdminId: number | null
+    adminMessageId: number | null //ایدی پیامی که برای ادمین رفته برای  اینکه بتونی پاک کنی
 }
 
 const OrderSchema: Schema = new Schema({
@@ -43,7 +44,9 @@ const OrderSchema: Schema = new Schema({
     awaitingTrackingCode: { type: Boolean, default: false },
     trackingAdminId: { type: Number, default: null },
 
-    stausReject: { type: Boolean, default: false }
+    stausReject: { type: Boolean, default: false },
+    adminMessageId: { type: Number, default: null },
+
 });
 
 export default mongoose.models.Order ||

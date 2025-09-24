@@ -104,6 +104,8 @@ bot.action(/confirm_receipt_(.+)/, async (ctx) => {
 
     const orderId = ctx.match[1];
     const order = await Order.findById(orderId).populate("userId productId");
+    if (!order) return ctx.reply("❌ سفارش پیدا نشد.");
+
     order.status = "approved";
     await order.save();
 
@@ -120,6 +122,15 @@ bot.action(/confirm_receipt_(.+)/, async (ctx) => {
         }
     }
     );
+    // حذف پیام رسید از چت ادمین
+    try {
+        if (ctx.chat && order.adminMessageId) {
+            await ctx.telegram.deleteMessage(ctx.chat.id, order.adminMessageId);
+        }
+
+    } catch (e) {
+        console.error("❌ خطا در حذف پیام رسید:", e);
+    }
     // پاک کردن پیام از چت ادمین
     await ctx.deleteMessage();
     await ctx.answerCbQuery("فیش تایید شد.");
@@ -1249,18 +1260,21 @@ bot.on("photo", async (ctx) => {
 
         // اطلاع ادمین
         const ADMIN_ID = 622650522;
-        await ctx.telegram.sendPhoto(ADMIN_ID, fileId, {
+        const sentMessage = await ctx.telegram.sendPhoto(ADMIN_ID, fileId, {
             caption: `📑 رسید پرداخت سفارش ${pendingOrder._id} از کاربر ${user.name}`,
             reply_markup: {
                 inline_keyboard: [
                     [{ text: "✅ تایید رسید", callback_data: `confirm_receipt_${pendingOrder._id}` }],
                     [{ text: "❌ رد رسید", callback_data: `reject_receipt_${pendingOrder._id}` }],
-                    [{ text: "📦 مشاهده محصول", callback_data: `view_product_${pendingOrder._id}` }], // ⬅️ اینو اضافه کردیم
-
+                    [{ text: "📦 مشاهده محصول", callback_data: `view_product_${pendingOrder._id}` }],
                     [{ text: "⚙️ منوی ادمین", callback_data: "admin_menu" }],
                 ],
             },
         });
+        // ذخیره message_id برای پاک کردن بعداً
+        pendingOrder.adminMessageId = sentMessage.message_id;
+        await pendingOrder.save();
+
 
         await ctx.deleteMessage();
 
