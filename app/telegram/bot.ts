@@ -150,15 +150,15 @@ bot.action(/confirm_receipt_(.+)/, async (ctx) => {
     );
     // حذف پیام رسید از چت ادمین
     // هنگام تایید محصول یا رسید
-    if (ctx.chat && order.adminMessageId) {
-        try {
-            await ctx.telegram.deleteMessage(ctx.chat.id, order.adminMessageId);
-            order.adminMessageId = undefined;
-            await order.save();
-        } catch (err) {
-            console.error("❌ خطا در حذف پیام ادمین:", err);
-        }
-    }
+    // if (ctx.chat && order.adminMessageId) {
+    //     try {
+    //         await ctx.telegram.deleteMessage(ctx.chat.id, order.adminMessageId);
+    //         order.adminMessageId = undefined;
+    //         await order.save();
+    //     } catch (err) {
+    //         console.error("❌ خطا در حذف پیام ادمین:", err);
+    //     }
+    // }
 
     // بروزرسانی کیبورد برای حذف تایید/رد و اضافه کردن "تغییر وضعیت"
     // تغییر متن پیام در چت ادمین و کیبورد فقط منوی مدیریت
@@ -196,15 +196,15 @@ bot.action(/reject_receipt_(.+)/, async (ctx) => {
     await order.save();
 
     // هنگام تایید محصول یا رسید
-    if (ctx.chat && order.adminMessageId) {
-        try {
-            await ctx.telegram.deleteMessage(ctx.chat.id, order.adminMessageId);
-            order.adminMessageId = undefined;
-            await order.save();
-        } catch (err) {
-            console.error("❌ خطا در حذف پیام ادمین:", err);
-        }
-    }
+    // if (ctx.chat && order.adminMessageId) {
+    //     try {
+    //         await ctx.telegram.deleteMessage(ctx.chat.id, order.adminMessageId);
+    //         order.adminMessageId = undefined;
+    //         await order.save();
+    //     } catch (err) {
+    //         console.error("❌ خطا در حذف پیام ادمین:", err);
+    //     }
+    // }
     await ctx.telegram.sendMessage(order.userId.telegramId, `❌ فیش واریزی شما تایید نشد. لطفا دوباره اقدام کنید.`, {
         reply_markup: {
             inline_keyboard: [
