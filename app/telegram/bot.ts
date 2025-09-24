@@ -162,8 +162,8 @@ bot.action(/confirm_receipt_(.+)/, async (ctx) => {
 
     // بروزرسانی کیبورد برای حذف تایید/رد و اضافه کردن "تغییر وضعیت"
     // تغییر متن پیام در چت ادمین و کیبورد فقط منوی مدیریت
-    await ctx.editMessageText(
-        `✅  رسید این محصول تایید شد و وضعیت آن تغییر یافت.`,
+    await ctx.editMessageCaption(
+        `✅ رسید این محصول تایید شد و وضعیت آن تغییر یافت.`,
         {
             reply_markup: {
                 inline_keyboard: [
@@ -172,6 +172,7 @@ bot.action(/confirm_receipt_(.+)/, async (ctx) => {
             }
         }
     );
+
     // پاک کردن پیام از چت ادمین
     // await ctx.deleteMessage();
     await ctx.answerCbQuery("فیش تایید شد.");
