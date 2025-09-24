@@ -61,18 +61,39 @@ bot.action(/approve_product_(.+)/, async (ctx) => {
 
     const orderId = ctx.match[1];
     const order = await Order.findById(orderId).populate("userId productId");
+    if (!order) return ctx.answerCbQuery("❌ سفارش پیدا نشد.");
+
     order.status = "awaiting_payment";
     await order.save();
+
+    // پاک کردن همه پیام‌های کاربر
+    const orders = await Order.find({ userId: order.userId });
+    for (const o of orders) {
+        if (o.adminMessageId) {
+            try {
+                await ctx.telegram.deleteMessage(ctx.chat!.id, o.adminMessageId);
+                o.adminMessageId = undefined; // پاک کردن شناسه پیام
+                await o.save();
+            } catch (err) {
+                console.error("❌ خطا در حذف پیام:", err);
+            }
+        }
+    }
+
+    // پیام به کاربر
 
     await ctx.telegram.sendMessage(order.userId.telegramId,
         `✅ ادمین محصول شما را تایید کرد.
 💰 لطفا مبلغ ${order.productId.price} را به شماره حساب X واریز کرده و رسید را ارسال کنید.`
     );
     // پاک کردن پیام از چت ادمین
-    await ctx.deleteMessage();
+    // await ctx.deleteMessage();
 
     await ctx.answerCbQuery("محصول تایید شد.");
 });
+// ==========================
+// رد محصول
+
 bot.action(/reject_product_(.+)/, async (ctx) => {
     await connectDB(); // ⭐ حتما اضافه کن
 
@@ -89,6 +110,20 @@ bot.action(/reject_product_(.+)/, async (ctx) => {
     order.awaitingRejectReason = true;
     order.rejectReasonAdminId = ctx.from.id;
     await order.save();
+
+    // پاک کردن همه پیام‌های کاربر
+    const orders = await Order.find({ userId: order.userId });
+    for (const o of orders) {
+        if (o.adminMessageId) {
+            try {
+                await ctx.telegram.deleteMessage(ctx.chat!.id, o.adminMessageId);
+                o.adminMessageId = undefined;
+                await o.save();
+            } catch (err) {
+                console.error("❌ خطا در حذف پیام:", err);
+            }
+        }
+    }
 
     console.log(`[DEBUG] ${waitingForRejectReason} - ذخیره سفارش در حالت انتظار دلیل`)
     await ctx.reply("لطفا دلیل رد کردن محصول را بنویسید:");
@@ -109,6 +144,8 @@ bot.action(/confirm_receipt_(.+)/, async (ctx) => {
     order.status = "approved";
     await order.save();
 
+
+
     await ctx.telegram.sendMessage(order.userId.telegramId,
         `✅ سفارش شما تایید شد.
 📦 پس از ارسال، کد رهگیری برای شما ارسال خواهد شد.
@@ -123,13 +160,26 @@ bot.action(/confirm_receipt_(.+)/, async (ctx) => {
     }
     );
     // حذف پیام رسید از چت ادمین
-    try {
-        if (ctx.chat && order.adminMessageId) {
-            await ctx.telegram.deleteMessage(ctx.chat.id, order.adminMessageId);
-        }
+    // try {
+    //     if (ctx.chat && order.adminMessageId) {
+    //         await ctx.telegram.deleteMessage(ctx.chat.id, order.adminMessageId);
+    //     }
 
-    } catch (e) {
-        console.error("❌ خطا در حذف پیام رسید:", e);
+    // } catch (e) {
+    //     console.error("❌ خطا در حذف پیام رسید:", e);
+    // }
+    // پاک کردن همه پیام‌های کاربر
+    const orders = await Order.find({ userId: order.userId });
+    for (const o of orders) {
+        if (o.adminMessageId) {
+            try {
+                await ctx.telegram.deleteMessage(ctx.chat!.id, o.adminMessageId);
+                o.adminMessageId = undefined;
+                await o.save();
+            } catch (err) {
+                console.error("❌ خطا در حذف پیام:", err);
+            }
+        }
     }
     // پاک کردن پیام از چت ادمین
     await ctx.deleteMessage();
@@ -154,7 +204,19 @@ bot.action(/reject_receipt_(.+)/, async (ctx) => {
     order.status = "payment_rejected";
     await order.save();
 
-
+    // پاک کردن همه پیام‌های کاربر
+    const orders = await Order.find({ userId: order.userId });
+    for (const o of orders) {
+        if (o.adminMessageId) {
+            try {
+                await ctx.telegram.deleteMessage(ctx.chat!.id, o.adminMessageId);
+                o.adminMessageId = undefined;
+                await o.save();
+            } catch (err) {
+                console.error("❌ خطا در حذف پیام:", err);
+            }
+        }
+    }
     await ctx.telegram.sendMessage(order.userId.telegramId, `❌ فیش واریزی شما تایید نشد. لطفا دوباره اقدام کنید.`, {
         reply_markup: {
             inline_keyboard: [
@@ -441,42 +503,55 @@ ${order.paymentReceipt ? "📑 رسید پرداخت: ✅ دارد" : "📑 رس
         `;
 
         const keyboard = [
-            [
-                {
-                    text: "✅ تایید محصول",
-                    callback_data: `approve_product_${order._id}`,
-                },
-            ],
-            [
-                {
-                    text: "❌ رد محصول",
-                    callback_data: `reject_product_${order._id}`,
-                },
-            ],
-            [{ text: "⚙️ منوی ادمین", callback_data: "admin_menu" }],
+            [{ text: "⚙️ تغییر وضعیت محصول", callback_data: `change_status_${order._id}` }],
+            [{ text: "🏠 منوی ادمین", callback_data: "admin_menu" }]
+
+
         ];
 
-        // اگر رسید پرداخت داشت، دکمه‌های مخصوص رسید هم اضافه کنیم
-        if (order.paymentReceipt && order.status !== 'payment_rejected') {
-            keyboard.push([
-                { text: "🔍 تایید رسید", callback_data: `confirm_receipt_${order._id}` },
-                { text: "🚫 رد رسید", callback_data: `reject_receipt_${order._id}` }
 
-
-            ], [{ text: "📦 مشاهده محصول", callback_data: `view_product_${order._id}` }]);
-        }
-
-
-
-
-
-        await ctx.reply(text, {
+        // 📌 پیام ارسال کن و message_id ذخیره کن
+        const sent = await ctx.reply(text, {
             reply_markup: { inline_keyboard: keyboard },
         });
+        order.adminMessageId = sent.message_id; // ذخیره توی سفارش
+        await order.save();
     }
     await ctx.answerCbQuery();
 });
+// 📌 هندلر دکمه تغییر وضعیت محصول
+bot.action(/change_status_(.+)/, async (ctx) => {
+    const orderId = ctx.match[1];
+    const order = await Order.findById(orderId).populate("productId");
 
+    if (!order) return ctx.reply("❌ سفارش پیدا نشد.");
+
+    const keyboard = [
+        [
+            { text: "✅ تایید محصول", callback_data: `approve_product_${order._id}` },
+            { text: "❌ رد محصول", callback_data: `reject_product_${order._id}` }
+        ],
+        [{ text: "📦 مشاهده محصول", callback_data: `view_product_${order._id}` }]
+
+    ];
+
+    if (order.paymentReceipt && order.status !== "payment_rejected") {
+        keyboard.push(
+            [
+                { text: "🔍 تایید رسید", callback_data: `confirm_receipt_${order._id}` },
+                { text: "🚫 رد رسید", callback_data: `reject_receipt_${order._id}` }
+            ]
+        );
+    }
+
+    keyboard.push([{ text: "🏠 منوی ادمین", callback_data: "admin_menu" }]);
+
+    await ctx.editMessageReplyMarkup({
+        inline_keyboard: keyboard
+    });
+
+    await ctx.answerCbQuery("🔄 دکمه‌ها بروزرسانی شدند");
+})
 
 // 📌 تابع کمکی برای نمایش وضعیت به فارسی
 function translateStatus(status: string): string {
