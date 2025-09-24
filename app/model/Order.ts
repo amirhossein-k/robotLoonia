@@ -12,6 +12,7 @@ export interface IOrder extends Document {
     rejectReasonAdminId: number | null;  // ادمینی که دلیل را وارد می‌کند
     rejectReasonText: string;       // متن دلیل رد
 
+    stausReject: boolean
     trackingCode: string;       //
     awaitingTrackingCode: boolean,
     trackingAdminId: number | null
@@ -42,6 +43,7 @@ const OrderSchema: Schema = new Schema({
     awaitingTrackingCode: { type: Boolean, default: false },
     trackingAdminId: { type: Number, default: null },
 
+    stausReject: { type: Boolean, default: false }
 });
 
 export default mongoose.models.Order ||

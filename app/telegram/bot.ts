@@ -215,9 +215,136 @@ bot.action("user_menu", async (ctx) => {
     // 🟢 یوزر فعلی
     const userTelegramId = ctx.from.id;
     const user = await User.findOne({ telegramId: userTelegramId });
+    if (!user) return ctx.reply("❌ کاربر پیدا نشد!");
+    // 🟢 سفارش  2 آخر کاربر
+    // گرفتن دو سفارش آخر کاربر
+    const lastTwoOrders = await Order.find({ userId: user._id })
+        .sort({ createdAt: -1 })
+        .limit(2)
+        .populate("productId");
 
-    // 🟢 سفارش آخر کاربر
-    const lastOrder = await Order.findOne({ userId: user._id }).sort({ createdAt: -1 });
+
+    // بررسی وجود سفارش‌ها
+    if (lastTwoOrders.length === 0) {
+        console.log("❌ سفارشی وجود ندارد");
+    } else {
+        for (const order of lastTwoOrders) {
+            const unfinishedOrders = [];
+
+            // سفارش رد شده
+            if (order.status === "rejected" && !order.stausReject) {
+                // مشاهده کرد کاربر که خریدش رد شده و وضعبت رد شدن را فعال کن تا دیگر نمایش ندهد
+                order.stausReject = true
+                await order.save()
+                await ctx.reply(
+                    `🚫 سفارش شما توسط ادمین رد شد:\n💬 دلیل: ${order.rejectReasonText}`,
+                    {
+                        reply_markup: {
+                            inline_keyboard: [
+                                [
+                                    { text: "💬 چت با ادمین", callback_data: `chat_${telegramId}` }
+                                ],
+                                [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }]
+                            ]
+                        }
+                    }
+                );
+                unfinishedOrders.push(order);
+
+            }
+            // سفارش در حالت pending
+            else if (order.status === "pending") {
+                const text = `
+🛒 محصول: ${order?.productId?.title || "-"}
+💰 قیمت: ${order?.productId?.price || "-"}
+📦 وضعیت: ${translateStatus(order.status)}
+🕒 تاریخ ثبت: ${order.createdAt.toLocaleString("fa-IR", { timeZone: "Asia/Tehran" })}
+        `;
+                await ctx.reply(text, {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: "❌ لغو سفارش", callback_data: `cancel_${order._id}` },
+                                { text: "💬 چت با ادمین", callback_data: `chat_${telegramId}` }
+                            ]
+                        ]
+                    },
+                });
+                unfinishedOrders.push(order);
+
+            } else if (order.status === "awaiting_payment") {
+                await ctx.reply(
+                    "💳 سفارش شما هنوز در انتظار پرداخت است.\nلطفاً فیش واریزی را ارسال کنید.",
+                    {
+                        reply_markup: {
+                            inline_keyboard: [
+                                [
+                                    { text: "❌ لغو سفارش", callback_data: `cancel_${order._id}` },
+                                    { text: "💬 چت با ادمین", callback_data: `chat_${telegramId}` }
+                                ]
+                            ]
+                        }
+                    }
+                );
+            }
+            // سفارش در حال بررسی فیش
+
+            else if (order.status === "payment_review") {
+                const text = `
+🛒 محصول: ${order?.productId?.title || "-"}
+💰 قیمت: ${order?.productId?.price || "-"}
+📦 وضعیت: ${translateStatus(order.status)}
+🕒 تاریخ ثبت: ${order.createdAt.toLocaleString("fa-IR", { timeZone: "Asia/Tehran" })}
+        `;
+                await ctx.reply(
+                    ` درحال بررسی رسید خرید هستیم منتظر بمانید
+                    اطلاعات محصول خریداری شده:
+                    ${text}
+                    `,
+                    {
+                        reply_markup: {
+                            inline_keyboard: [
+                                [
+                                    { text: "💬 چت با ادمین", callback_data: `chat_${telegramId}` }
+                                ]
+                            ]
+                        }
+                    }
+                );
+                unfinishedOrders.push(order);
+
+            }
+            // فیش پرداختی رد شده
+
+            else if (order.status === "payment_rejected") {
+                await ctx.reply(
+                    "❌ فیش پرداختی قبلی شما رد شد.\nلطفاً دوباره اقدام کنید.",
+                    {
+                        reply_markup: {
+                            inline_keyboard: [
+                                [
+                                    { text: "💬 چت با ادمین", callback_data: `chat_${telegramId}` },
+                                    { text: "💳 اقدام دوباره", callback_data: `retry_payment_${order._id}` }
+                                ],
+
+                            ]
+                        }
+                    }
+                );
+                unfinishedOrders.push(order);
+
+            }
+            // اگر سفارش ناقص وجود داشت → اجازه ثبت محصول جدید نده
+            if (unfinishedOrders.length > 0) {
+                await ctx.reply("⛔ لطفاً ابتدا سفارش‌های باز خود را تکمیل کنید.");
+                return ctx.answerCbQuery();
+            }
+
+        }
+
+    }
+
+
 
 
     // دکمه‌های پیش‌فرض
@@ -229,15 +356,7 @@ bot.action("user_menu", async (ctx) => {
         ],
         [{ text: "آدرس", callback_data: "address" }],
     ];
-    // 🟢 فقط اگر سفارش هست و وضعیتش approved نیست
-    if (lastOrder && lastOrder.status !== "approved") {
-        buttons.push([
-            { text: "🔙 ادامه فرایند قبلی", callback_data: `resume_${lastOrder._id}` }
-        ]);
-        buttons.push([
-            { text: "❌ لغو سفارش", callback_data: `cancel_${lastOrder._id}` }
-        ]);
-    }
+
 
 
 
@@ -299,21 +418,51 @@ bot.action(/user_orders_(\d+)/, async (ctx) => {
     }
 
     // ساختن متن سفارش‌ها
-    const text = orders
-        .map((order) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const product: any = order.productId;
-            return `
+    for (const order of orders) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const product: any = order.productId;
+        const text = `
 🛒 محصول: ${product?.title || "-"}
 💰 قیمت: ${product?.price || "-"}
 📦 وضعیت: ${translateStatus(order.status)}
 🕒 تاریخ ثبت: ${order.createdAt.toLocaleString("fa-IR", { timeZone: "Asia/Tehran" })}
 ${order.paymentReceipt ? "📑 رسید پرداخت: ✅ دارد" : "📑 رسید پرداخت: ❌ ندارد"}
-            `;
-        })
-        .join("\n\n──────────────\n\n");
+        `;
 
-    await ctx.reply(`📋 سفارش‌های کاربر ${user.name || "-"}:\n\n${text}`);
+        const keyboard = [
+            [
+                {
+                    text: "✅ تایید محصول",
+                    callback_data: `approve_product_${order._id}`,
+                },
+            ],
+            [
+                {
+                    text: "❌ رد محصول",
+                    callback_data: `reject_product_${order._id}`,
+                },
+            ],
+            [{ text: "⚙️ منوی ادمین", callback_data: "admin_menu" }],
+        ];
+
+        // اگر رسید پرداخت داشت، دکمه‌های مخصوص رسید هم اضافه کنیم
+        if (order.paymentReceipt && order.status !== 'payment_rejected') {
+            keyboard.push([
+                { text: "🔍 تایید رسید", callback_data: `confirm_receipt_${order._id}` },
+                { text: "🚫 رد رسید", callback_data: `reject_receipt_${order._id}` }
+
+
+            ], [{ text: "📦 مشاهده محصول", callback_data: `view_product_${order._id}` }]);
+        }
+
+
+
+
+
+        await ctx.reply(text, {
+            reply_markup: { inline_keyboard: keyboard },
+        });
+    }
     await ctx.answerCbQuery();
 });
 
@@ -381,7 +530,19 @@ bot.action(/resume_(.+)/, async (ctx) => {
     switch (order.status) {
         case "awaiting_payment":
             await ctx.reply(
-                "💳 سفارش شما هنوز در انتظار پرداخت است.\nلطفاً فیش واریزی را ارسال کنید."
+                "💳 سفارش شما هنوز در انتظار پرداخت است.\nلطفاً فیش واریزی را ارسال کنید.",
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: "💬 چت با ادمین", callback_data: `chat_${telegramId}` },
+                            ],
+                            [
+                                { text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }
+                            ]
+                        ]
+                    }
+                }
             );
             break;
 
@@ -406,7 +567,36 @@ bot.action(/resume_(.+)/, async (ctx) => {
 
         case "awaiting_tracking_code":
             await ctx.reply(
-                "📦 سفارش شما تایید شده است و منتظر دریافت کد رهگیری می‌باشد."
+                "📦 سفارش شما تایید شده است و منتظر دریافت کد رهگیری می‌باشد.",
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: "💬 چت با ادمین", callback_data: `chat_${telegramId}` },
+                            ],
+                            [
+                                { text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }
+                            ]
+                        ]
+                    }
+                }
+            );
+            break;
+        case "payment_review":
+            await ctx.reply(
+                "لطفا کمی صبر کنید تا ادمین رسید شما را بررسی کند",
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: "💬 چت با ادمین", callback_data: `chat_${telegramId}` },
+                            ],
+                            [
+                                { text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }
+                            ]
+                        ]
+                    }
+                }
             );
             break;
 
