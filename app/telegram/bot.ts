@@ -76,6 +76,18 @@ bot.action(/approve_product_(.+)/, async (ctx) => {
     );
     // پاک کردن پیام از چت ادمین
     // await ctx.deleteMessage();
+    // بروزرسانی کیبورد برای حذف تایید/رد و اضافه کردن "تغییر وضعیت"
+    // تغییر متن پیام در چت ادمین و کیبورد فقط منوی مدیریت
+    await ctx.editMessageText(
+        `✅ این محصول تایید شد و وضعیت آن تغییر یافت.`,
+        {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: "🏠 منوی مدیریت", callback_data: "admin_menu" }]
+                ]
+            }
+        }
+    );
 
     await ctx.answerCbQuery("محصول تایید شد.");
 });
@@ -104,6 +116,8 @@ bot.action(/reject_product_(.+)/, async (ctx) => {
     await ctx.reply("لطفا دلیل رد کردن محصول را بنویسید:");
     await ctx.answerCbQuery("لطفا دلیل رد را وارد کنید.");
     // await ctx.telegram.sendMessage(order.userId.telegramId, `❌ محصول شما توسط ادمین رد شد.`);
+
+
     // await ctx.answerCbQuery("محصول رد شد.");
 });
 // ========================
@@ -146,6 +160,18 @@ bot.action(/confirm_receipt_(.+)/, async (ctx) => {
         }
     }
 
+    // بروزرسانی کیبورد برای حذف تایید/رد و اضافه کردن "تغییر وضعیت"
+    // تغییر متن پیام در چت ادمین و کیبورد فقط منوی مدیریت
+    await ctx.editMessageText(
+        `✅  رسید این محصول تایید شد و وضعیت آن تغییر یافت.`,
+        {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: "🏠 منوی مدیریت", callback_data: "admin_menu" }]
+                ]
+            }
+        }
+    );
     // پاک کردن پیام از چت ادمین
     // await ctx.deleteMessage();
     await ctx.answerCbQuery("فیش تایید شد.");
@@ -1075,7 +1101,17 @@ bot.on("text", async (ctx) => {
                 }
             }
         );
-
+        // تغییر متن پیام در چت ادمین و کیبورد فقط منوی مدیریت
+        await ctx.editMessageText(
+            `✅ این محصول تایید شد و وضعیت آن تغییر یافت.`,
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: "🏠 منوی مدیریت", callback_data: "admin_menu" }]
+                    ]
+                }
+            }
+        );
         return ctx.reply("✅ دلیل رد محصول به کاربر ارسال شد.");
     }
     // بررسی اینکه ادمین منتظر وارد کردن کد پیگیری است
