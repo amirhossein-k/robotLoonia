@@ -1039,6 +1039,14 @@ bot.action(/^view_product_(.+)$/, async (ctx) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const user = order.userId as any;
 
+    // 🕒 زمان به وقت تهران
+    const createdAtTehran = new Intl.DateTimeFormat("fa-IR", {
+        dateStyle: "full",
+        timeStyle: "short",
+        timeZone: "Asia/Tehran",
+    }).format(order.createdAt);
+
+
     // اگر محصول عکس داشته باشد
     if (product.photoUrl) {
         await ctx.replyWithPhoto(product.photoUrl, {
@@ -1049,7 +1057,7 @@ bot.action(/^view_product_(.+)$/, async (ctx) => {
                 (product.size ? `📏 سایز: ${product.size}\n` : "") +
                 `🔢 تعداد: ${order.trackingCode ? order.trackingCode : order.quantity || 1}\n\n` +
                 `👤 کاربر: ${user?.name || "-"} (ID: ${user?.telegramId || "-"})\n` +
-                `📅 تاریخ سفارش: ${order.createdAt.toLocaleString("fa-IR")}`
+                `📅 تاریخ سفارش: ${createdAtTehran}`
         });
     } else {
         await ctx.reply(
@@ -1059,7 +1067,7 @@ bot.action(/^view_product_(.+)$/, async (ctx) => {
             (product.size ? `📏 سایز: ${product.size}\n` : "") +
             `🔢 تعداد: ${order.trackingCode ? order.trackingCode : order.quantity || 1}\n\n` +
             `👤 کاربر: ${user?.name || "-"} (ID: ${user?.telegramId || "-"})\n` +
-            `📅 تاریخ سفارش: ${order.createdAt.toLocaleString("fa-IR")}`
+            `📅 تاریخ سفارش: ${createdAtTehran}`
         );
     }
 
