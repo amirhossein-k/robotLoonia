@@ -196,6 +196,8 @@ bot.action("admin_menu", async (ctx) => {
                 [{ text: "➕ افزودن محصول", callback_data: "admin_add_product" }],
                 [{ text: "📦 لیست محصولات", callback_data: "list" }],
                 [{ text: "🛒 لیست سفارشات", callback_data: "admin_orders" }],
+                [{ text: "👥 کاربران سفارش‌دهنده", callback_data: "admin_order_users" }],
+
             ],
         },
     });
@@ -245,6 +247,90 @@ bot.action("user_menu", async (ctx) => {
 
     await ctx.answerCbQuery(); // برای بستن لودینگ تلگرام
 });
+
+// 📌 نمایش کاربران سفارش‌دهنده
+bot.action("admin_order_users", async (ctx) => {
+    await connectDB();
+
+    // همه سفارش‌ها
+    const orders = await Order.find().populate("userId");
+    if (!orders.length) {
+        return ctx.reply("❌ هنوز سفارشی ثبت نشده است.");
+    }
+
+    // استخراج کاربران یکتا
+    const uniqueUsers = new Map();
+    orders.forEach((order) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const user = order.userId as any;
+        if (user && !uniqueUsers.has(user._id.toString())) {
+            uniqueUsers.set(user._id.toString(), user);
+        }
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const buttons = Array.from(uniqueUsers.values()).map((user: any) => [
+        { text: `${user.name || "کاربر"} (${user.telegramId})`, callback_data: `user_orders_${user.telegramId}` },
+    ]);
+
+    await ctx.reply("👥 کاربران سفارش‌دهنده:", {
+        reply_markup: { inline_keyboard: buttons },
+    });
+
+    await ctx.answerCbQuery();
+});
+
+// 📌 نمایش سفارش‌های یک کاربر خاص
+bot.action(/user_orders_(\d+)/, async (ctx) => {
+    await connectDB();
+
+    const telegramId = Number(ctx.match[1]);
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+        return ctx.reply("❌ کاربر پیدا نشد!");
+    }
+
+    // سفارش‌های کاربر
+    const orders = await Order.find({ userId: user._id }).populate("productId");
+
+    if (!orders.length) {
+        return ctx.reply(`❌ کاربر ${user.name || "-"} هیچ سفارشی ثبت نکرده است.`);
+    }
+
+    // ساختن متن سفارش‌ها
+    const text = orders
+        .map((order) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const product: any = order.productId;
+            return `
+🛒 محصول: ${product?.title || "-"}
+💰 قیمت: ${product?.price || "-"}
+📦 وضعیت: ${translateStatus(order.status)}
+🕒 تاریخ ثبت: ${order.createdAt.toLocaleString("fa-IR", { timeZone: "Asia/Tehran" })}
+${order.paymentReceipt ? "📑 رسید پرداخت: ✅ دارد" : "📑 رسید پرداخت: ❌ ندارد"}
+            `;
+        })
+        .join("\n\n──────────────\n\n");
+
+    await ctx.reply(`📋 سفارش‌های کاربر ${user.name || "-"}:\n\n${text}`);
+    await ctx.answerCbQuery();
+});
+
+
+// 📌 تابع کمکی برای نمایش وضعیت به فارسی
+function translateStatus(status: string): string {
+    switch (status) {
+        case "pending": return "⏳ در انتظار بررسی";
+        case "awaiting_payment": return "💳 در انتظار پرداخت";
+        case "payment_review": return "🔍 در انتظار تأیید پرداخت";
+        case "approved": return "✅ تایید شده";
+        case "payment_rejected": return "❌ رسید رد شده";
+        case "rejected": return "❌ سفارش رد شده";
+        default: return status;
+    }
+}
+
 
 bot.action(/cancel_(.+)/, async (ctx) => {
     await connectDB();

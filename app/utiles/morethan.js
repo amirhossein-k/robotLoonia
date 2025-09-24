@@ -9,3 +9,10 @@ export async function findTelegramIdByName(name) {
   const user = await User.findOne({ name: name });
   return user ? user.telegramId : null;
 }
+
+// 🕒 زمان به وقت تهران
+// const createdAtTehran = new Intl.DateTimeFormat("fa-IR", {
+//   dateStyle: "full",
+//   timeStyle: "short",
+//   timeZone: "Asia/Tehran",
+// }).format(order.createdAt);
