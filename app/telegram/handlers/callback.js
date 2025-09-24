@@ -183,6 +183,26 @@ export function callbackHandler() {
         return ctx.reply("❌ محصول پیدا نشد.");
       }
 
+      // گرفتن دو سفارش آخر کاربر
+      const lastTwoOrders = await Order.find({ userId: user._id })
+        .sort({ createdAt: -1 })
+        .limit(2)
+        .populate("productId");
+
+      // بررسی وجود سفارش‌ها
+      if (lastTwoOrders.length === 0) {
+        console.log("❌ سفارشی وجود ندارد");
+      } else {
+        for (const order of lastTwoOrders) {
+          if (order.status !== "approved") {
+            await ctx.reply("⛔ لطفاً ابتدا سفارش‌های باز خود را تکمیل کنید.");
+            await bot.actions.get("user_menu")?.(ctx); // یا ctx.update.callback_query را شبیه‌سازی کن
+
+            return ctx.answerCbQuery();
+          }
+        }
+      }
+
       // ایجاد سفارش
       const newOrder = await Order.create({
         productId: product._id,

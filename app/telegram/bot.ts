@@ -427,6 +427,24 @@ bot.action("user_menu", async (ctx) => {
 
     await ctx.answerCbQuery(); // برای بستن لودینگ تلگرام
 });
+// هندلر دکمه پیگیری سفارش
+bot.action("peigiri", async (ctx) => {
+    await connectDB();
+
+    // پیدا کردن آخرین سفارش کاربر (یا می‌توانی سفارش خاصی را با ID ذخیره شده پیدا کنی)
+    const user = await User.findOne({ telegramId: ctx.from.id });
+    if (!user) return ctx.reply("❌ کاربر پیدا نشد.");
+
+    // پیدا کردن آخرین سفارش ارسال شده یا سفارش دلخواه
+    const order = await Order.findOne({ userId: user._id, status: "approved" }).sort({ createdAt: -1 });
+    if (!order || !order.trackingCode) {
+        return ctx.reply("❌ هنوز کد رهگیری برای سفارش شما ثبت نشده است.");
+    }
+
+    // ارسال کد رهگیری
+    await ctx.reply(`📦 کد رهگیری سفارش شما: ${order.trackingCode}`);
+    await ctx.answerCbQuery();
+});
 
 // 📌 نمایش کاربران سفارش‌دهنده
 bot.action("admin_order_users", async (ctx) => {
