@@ -372,6 +372,9 @@ bot.action(/chat_(\d+)/, async (ctx) => {
                     ],
                     [
                         { text: "در انتظار تایید", callback_data: `pending_${ctx.from.id}` }
+                    ],
+                    [
+                        { text: "منتظر تایید رسید پرداخت شده", callback_data: `payment_${ctx.from.id}` }
                     ]
                 ]
             }
@@ -404,6 +407,32 @@ bot.action(/^approved_(\d+)$/, async (ctx) => {
         : "❌ کالای تایید شده‌ای وجود ندارد.";
 
     await ctx.reply(`📋 کالاهای تایید شده:\n${message}`);
+    await ctx.answerCbQuery(); // بستن لودینگ
+});
+// هندلر برای تایید رسید پرداخت شده
+bot.action(/^payment_(\d+)$/, async (ctx) => {
+    console.log(`[DEBUG] /approved_(\d+)/`);
+
+    await connectDB();
+
+    const userId = Number(ctx.match[1]);
+    const user = await User.findOne({ telegramId: userId }); // فرض بر اینه User مدل دیتابیس است
+
+    if (!user) return ctx.reply("❌ کاربر پیدا نشد!");
+
+    // فرض بر اینه که user.pendingOrders شامل سفارشات کاربر هست
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // فچ کردن سفارشات تایید شده از مدل Order
+    const approvedOrders = await Order.find({
+        userId: user._id,
+        status: "payment_review"
+    }).populate("productId"); // اگر میخوای نام محصول را هم داشته باشی
+
+    const message = approvedOrders.length
+        ? approvedOrders.map((o) => `✅ ${o.productId.title} - تعداد: ${o.quantity || 1}`).join("\n")
+        : "❌ کالای تایید رسید پرداخت شد وجود ندارد.";
+
+    await ctx.reply(`📋تایید رسید پرداخت شده\n${message}`);
     await ctx.answerCbQuery(); // بستن لودینگ
 });
 
