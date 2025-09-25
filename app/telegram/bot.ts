@@ -480,7 +480,11 @@ bot.action(/field_(.+)_(.+)/, async (ctx) => {
     await connectDB(); // ⭐ حتما اضافه کن
 
     const admin = await User.findOne({ name: targetName });
-    admin.editProductFiled = `edit_product_${field}`;
+    if (!admin) {
+        console.log("❌ ادمین پیدا نشد");
+        return ctx.answerCbQuery("❌ ادمین پیدا نشد.", { show_alert: true });
+    }
+    admin.editProductField = `edit_product_${field}`;
     admin.editingProductId = productId;
     await admin.save();
 

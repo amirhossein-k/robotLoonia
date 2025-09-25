@@ -38,7 +38,7 @@ const userSchema = new Schema(
             slot3: { type: String, default: null },
         },
         editingProductId: { type: String, default: null },
-        editProductFiled: { type: String, default: null },
+        editProductField: { type: String, default: null },
         pendingRequests: { type: [Number], default: [] }, // درخواست‌هایی که کاربر باید قبول کند
 
     },
