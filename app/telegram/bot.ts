@@ -207,16 +207,74 @@ bot.action(/reject_receipt_(.+)/, async (ctx) => {
     order.status = "payment_rejected";
     await order.save();
 
-    // هنگام تایید محصول یا رسید
-    // if (ctx.chat && order.adminMessageId) {
-    //     try {
-    //         await ctx.telegram.deleteMessage(ctx.chat.id, order.adminMessageId);
-    //         order.adminMessageId = undefined;
-    //         await order.save();
-    //     } catch (err) {
-    //         console.error("❌ خطا در حذف پیام ادمین:", err);
-    //     }
-    // }
+
+
+    await ctx.telegram.sendMessage(order.userId.telegramId, `❌ فیش واریزی شما تایید نشد. لطفا دوباره اقدام کنید.`, {
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    { text: "💳 اقدام دوباره", callback_data: `retry_payment_${order._id}` },
+                    { text: "💬 چت با ادمین", callback_data: `chat_${telegramId}` },
+                ],
+                [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }],
+            ]
+        }
+    });
+
+    await ctx.editMessageCaption(
+        `✅ رسید این محصول رد شد و وضعیت آن تغییر یافت.`,
+        {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: "🏠 منوی مدیریت", callback_data: "admin_menu" }]
+                ]
+            }
+        }
+    );
+
+    await ctx.answerCbQuery("فیش رد شد.");
+});
+// وقتی روی دکمه در قسمت لیست کاربران کلیک شده در تغیر وضعیت
+bot.action(/reject_receiptList_(.+)/, async (ctx) => {
+    console.log(` [DEBUG] /reject_receipt_(.+)/`)
+    await connectDB(); // 👈 حتما بزن
+
+    const targetName = '09391470427'
+    const telegramId = await findTelegramIdByName(targetName);
+    if (!telegramId) {
+        await ctx.reply("❌ کاربر پیدا نشد!");
+        return ctx.answerCbQuery();
+    }
+
+    const orderId = ctx.match[1];
+    const order = await Order.findById(orderId).populate("userId productId");
+    if (!order) return ctx.answerCbQuery("❌ سفارش پیدا نشد.");
+
+    // 📌 رسید فعلی رو به rejectedReceipts اضافه کن
+    if (order.paymentReceipt) {
+        order.rejectedReceipts.push({
+            fileId: order.paymentReceipt,
+            rejectedAt: new Date(),
+            adminId: ctx.from.id,
+            rejectReason: "ادمین رد کرد" // یا بعدا بذار کاربر دلیل بده
+        });
+        order.paymentReceipt = ""; // رسید فعال خالی بشه
+    }
+
+    order.status = "payment_rejected";
+    await order.save();
+
+    await ctx.editMessageCaption(
+        `✅ رسید این محصول رد شد و وضعیت آن تغییر یافت.`,
+        {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: "🏠 منوی مدیریت", callback_data: "admin_menu" }]
+                ]
+            }
+        }
+    );
+
     await ctx.telegram.sendMessage(order.userId.telegramId, `❌ فیش واریزی شما تایید نشد. لطفا دوباره اقدام کنید.`, {
         reply_markup: {
             inline_keyboard: [
@@ -600,7 +658,7 @@ bot.action(/change_status_(.+)/, async (ctx) => {
         keyboard.push(
             [
                 { text: "🔍 تایید رسید", callback_data: `confirm_receipt_${order._id}` },
-                { text: "🚫 رد رسید", callback_data: `reject_receipt_${order._id}` }
+                { text: "🚫 رد رسید", callback_data: `reject_receiptList_${order._id}` }
             ]
         );
     }
