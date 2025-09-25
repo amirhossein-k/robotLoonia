@@ -1,6 +1,13 @@
 // app/model/Order.ts
 import mongoose, { Schema, Document } from "mongoose";
 
+export interface IRejectedReceipt {
+    fileId: string; // file_id یا لینک عکس رسید
+    rejectedAt: Date;
+    rejectReason?: string;
+    adminId?: number;
+}
+
 export interface IOrder extends Document {
     productId: mongoose.Types.ObjectId; // ریفرنس به Product
     userId: mongoose.Types.ObjectId;    // ریفرنس به User
@@ -18,7 +25,18 @@ export interface IOrder extends Document {
     trackingAdminId: number | null
     adminMessageId: number | null //ایدی پیامی که برای ادمین رفته برای  اینکه بتونی پاک کنی
     steplistorder: boolean
+
+    rejectedReceipts: IRejectedReceipt[]; // 👈 لیست رسیدهای رد شده
+
 }
+
+const RejectedReceiptSchema = new Schema<IRejectedReceipt>({
+    fileId: { type: String, required: true },
+    rejectedAt: { type: Date, default: Date.now },
+    rejectReason: { type: String, default: "" },
+    adminId: { type: Number, default: null }
+});
+
 
 const OrderSchema: Schema = new Schema({
     productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
@@ -47,7 +65,9 @@ const OrderSchema: Schema = new Schema({
 
     stausReject: { type: Boolean, default: false },
     adminMessageId: { type: Number, default: null },
-    steplistorder: { type: Boolean, default: false }
+    steplistorder: { type: Boolean, default: false },
+    rejectedReceipts: { type: [RejectedReceiptSchema], default: [] }, // رسیدهای رد شده
+
 
 });
 

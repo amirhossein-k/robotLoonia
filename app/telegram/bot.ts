@@ -193,6 +193,17 @@ bot.action(/reject_receipt_(.+)/, async (ctx) => {
     const order = await Order.findById(orderId).populate("userId productId");
     if (!order) return ctx.answerCbQuery("❌ سفارش پیدا نشد.");
 
+    // 📌 رسید فعلی رو به rejectedReceipts اضافه کن
+    if (order.paymentReceipt) {
+        order.rejectedReceipts.push({
+            fileId: order.paymentReceipt,
+            rejectedAt: new Date(),
+            adminId: ctx.from.id,
+            rejectReason: "ادمین رد کرد" // یا بعدا بذار کاربر دلیل بده
+        });
+        order.paymentReceipt = ""; // رسید فعال خالی بشه
+    }
+
     order.status = "payment_rejected";
     await order.save();
 
@@ -533,9 +544,11 @@ bot.action(/user_orders_(\d+)/, async (ctx) => {
         const text = `
 🛒 محصول: ${product?.title || "-"}
 💰 قیمت: ${product?.price || "-"}
-📦 وضعیت: ${translateStatus(order.status)}
+📦 وضعیت: ${translateStatus(order.status)} - ${order.status === "approved" && order.trackingCode !== "" ? `مرسوله ارسال شده است` : `هنوز مرسوله ارسال نشده است`}
 🕒 تاریخ ثبت: ${order.createdAt.toLocaleString("fa-IR", { timeZone: "Asia/Tehran" })}
 ${order.paymentReceipt ? "📑 رسید پرداخت: ✅ دارد" : "📑 رسید پرداخت: ❌ ندارد"}
+${order.trackingCode ? `کد رهگیری پستی: 
+${order.trackingCode}` : "کد رهگیری پستی  ثبت نشده است"}
         `;
 
         const keyboard = [
