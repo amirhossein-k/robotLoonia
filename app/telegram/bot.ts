@@ -506,7 +506,7 @@ bot.action("user_menu", async (ctx) => {
             const unfinishedOrders = [];
 
             // سفارش رد شده
-            if (order.status === "rejected" && !order.stausReject) {
+            if (order.status === "rejected" && order.stausReject === false) {
                 // مشاهده کرد کاربر که خریدش رد شده و وضعبت رد شدن را فعال کن تا دیگر نمایش ندهد
                 order.stausReject = true
                 await order.save()

@@ -320,7 +320,7 @@ export function callbackHandler() {
         await ctx.reply(
           `🛒 محصول: ${order.productId?.title || "-"}\n👤 خریدار: ${
             order.userId?.name || "-"
-          }\n📱 شماره: ${order.userId?.phone || "-"}\n💰 مبلغ: ${
+          }\n📱 کد پستی: ${order.userId?.phone || "-"}\n💰 مبلغ: ${
             order.productId?.price || "-"
           } تومان`,
           {
