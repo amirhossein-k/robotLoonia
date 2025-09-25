@@ -1485,14 +1485,14 @@ bot.on("text", async (ctx) => {
 
 
 
-    if (user.editProductField && user.editingProductId) {
+    if (admin.editProductField && admin.editingProductId) {
         console.log("[DEBUG] text received in edit product mode:", ctx.message.text);
         // find product on edit
-        const product = await Product.findById(user.editingProductId);
+        const product = await Product.findById(admin.editingProductId);
         if (!product) return ctx.reply("❌ محصول پیدا نشد.");
 
 
-        switch (user.editProductField) {
+        switch (admin.editProductField) {
             case "edit_product_title": product.title = ctx.message.text; break;
             case "edit_product_description": product.description = ctx.message.text; break;
             case "edit_product_price": product.price = ctx.message.text; break;
@@ -1507,9 +1507,9 @@ bot.on("text", async (ctx) => {
         console.log("[DEBUG] product updated:", product);
 
         // ریست وضعیت ادمین
-        user.editProductField = null;
-        user.editingProductId = null;
-        await user.save();
+        admin.editProductField = null;
+        admin.editingProductId = null;
+        await admin.save();
 
         await ctx.editMessageCaption(
             `✅ بروزرسانی شد:\n\n🛒 ${product.title}\n💰 ${product.price}\n📏 ${product.size}\n📂 ${product.category}`,
