@@ -1510,23 +1510,23 @@ bot.on("text", async (ctx) => {
 
 
 
-    if (user.editProductFiled && user.editingProductId) {
+    if (user.editProductField && user.editingProductId) {
         console.log(`[DEBUG] text action edit product mode`)
         // find product on edit
         const product = await Product.findById(user.editingProductId);
         if (!product) {
             await ctx.reply("❌ محصول پیدا نشد.");
         } else {
-            if (user.step === "edit_product_title") product.title = ctx.message.text;
-            if (user.step === "edit_product_desc") product.description = ctx.message.text;
-            if (user.step === "edit_product_price") product.price = ctx.message.text;
-            if (user.step === "edit_product_category") product.category = ctx.message.text;
-            if (user.step === "edit_product_size") product.size = ctx.message.text;
+            if (user.editProductField === "edit_product_title") product.title = ctx.message.text;
+            if (user.editProductField === "edit_product_desc") product.description = ctx.message.text;
+            if (user.editProductField === "edit_product_price") product.price = ctx.message.text;
+            if (user.editProductField === "edit_product_category") product.category = ctx.message.text;
+            if (user.editProductField === "edit_product_size") product.size = ctx.message.text;
 
             await product.save();
 
             // ریست وضعیت کاربر
-            user.step = null;
+            user.editProductField = null;
             user.editingProductId = null;
             await user.save();
 
