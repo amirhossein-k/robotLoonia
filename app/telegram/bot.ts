@@ -443,7 +443,7 @@ bot.action("admin_manage_products", async (ctx) => {
 
 // منوی ویرایش محصول
 bot.action(/edit_product_(.+)/, async (ctx) => {
-    console.log(`[DEBUG] /edit_product_(.+)/ action `)
+    console.log(`[DEBUG] /edit_product_(.+)/ action triggered`)
 
     await connectDB();
     const productId = ctx.match[1];
@@ -453,11 +453,11 @@ bot.action(/edit_product_(.+)/, async (ctx) => {
 
     const keyboard = [
         [{ text: "📝 تغییر نام", callback_data: `field_title_${product._id}` }],
-        [{ text: "📄 تغییر توضیحات", callback_data: `field_desc_${product._id}` }],
+        [{ text: "📄 تغییر توضیحات", callback_data: `field_description_${product._id}` }],
         [{ text: "💰 تغییر قیمت", callback_data: `field_price_${product._id}` }],
         [{ text: "📂 تغییر دسته‌بندی", callback_data: `field_category_${product._id}` }],
         [{ text: "📏 تغییر اندازه", callback_data: `field_size_${product._id}` }],
-        [{ text: "📸 تغییر عکس", callback_data: `field_photo_${product._id}` }],
+        [{ text: "📸 تغییر عکس", callback_data: `field_photoUrl_${product._id}` }],
         [{ text: "⬅️ بازگشت", callback_data: "admin_manage_products" }],
     ];
 
@@ -471,7 +471,7 @@ bot.action(/edit_product_(.+)/, async (ctx) => {
 
 // هندلر انتخاب هر فیلد
 bot.action(/field_(.+)_(.+)/, async (ctx) => {
-    console.log(`[DEBUG] /field_(.+)_(.+)/ action `)
+    console.log(`[DEBUG] /field_(.+)_(.+)/ action triggered`)
 
     const field = ctx.match[1]; // title, desc, price ...
     const productId = ctx.match[2];
@@ -484,31 +484,28 @@ bot.action(/field_(.+)_(.+)/, async (ctx) => {
         console.log("❌ ادمین پیدا نشد");
         return ctx.answerCbQuery("❌ ادمین پیدا نشد.", { show_alert: true });
     }
-    admin.editProductField = `edit_product_${field}`;
-    admin.editingProductId = productId;
-    await admin.save();
+    try {
+        admin.editProductField = `edit_product_${field}`;
+        admin.editingProductId = productId;
+        await admin.save();
+        console.log(`[DEBUG] admin updated: editProductField=${admin.editProductField}, editingProductId=${admin.editingProductId}`);
+    } catch (err) {
+        console.error("❌ Error saving admin:", err);
+        return ctx.answerCbQuery("❌ خطا در ذخیره اطلاعات ادمین", { show_alert: true });
+    }
 
     let msg = "";
     switch (field) {
-        case "title":
-            msg = "📝 نام جدید محصول را وارد کنید:";
-            break;
-        case "desc":
-            msg = "📄 توضیحات جدید محصول را وارد کنید:";
-            break;
-        case "price":
-            msg = "💰 قیمت جدید محصول را وارد کنید:";
-            break;
-        case "category":
-            msg = "📂 دسته‌بندی جدید محصول را وارد کنید:";
-            break;
-        case "size":
-            msg = "📏 اندازه جدید محصول را وارد کنید:";
-            break;
-        case "photo":
-            msg = "📸 عکس جدید محصول را ارسال کنید:";
-            break;
+        case "title": msg = "📝 نام جدید محصول را وارد کنید:"; break;
+        case "description": msg = "📄 توضیحات جدید محصول را وارد کنید:"; break;
+        case "price": msg = "💰 قیمت جدید محصول را وارد کنید:"; break;
+        case "category": msg = "📂 دسته‌بندی جدید محصول را وارد کنید:"; break;
+        case "size": msg = "📏 اندازه جدید محصول را وارد کنید:"; break;
+        case "photoUrl": msg = "📸 عکس جدید محصول را ارسال کنید:"; break;
+        default: msg = "❌ فیلد نامعتبر"; break;
     }
+
+
 
     await ctx.reply(msg);
     await ctx.answerCbQuery();
@@ -1390,6 +1387,7 @@ setInterval(async () => {
 // ارسال پیام
 bot.on("text", async (ctx) => {
 
+    console.log("[DEBUG] bot.on(text)");
 
     // ایدی ادمین
     const targetName = '09391470427'
@@ -1511,40 +1509,43 @@ bot.on("text", async (ctx) => {
 
 
     if (user.editProductField && user.editingProductId) {
-        console.log(`[DEBUG] text action edit product mode`)
+        console.log("[DEBUG] text received in edit product mode:", ctx.message.text);
         // find product on edit
         const product = await Product.findById(user.editingProductId);
-        if (!product) {
-            await ctx.reply("❌ محصول پیدا نشد.");
-        } else {
-            if (user.editProductField === "edit_product_title") product.title = ctx.message.text;
-            if (user.editProductField === "edit_product_desc") product.description = ctx.message.text;
-            if (user.editProductField === "edit_product_price") product.price = ctx.message.text;
-            if (user.editProductField === "edit_product_category") product.category = ctx.message.text;
-            if (user.editProductField === "edit_product_size") product.size = ctx.message.text;
+        if (!product) return ctx.reply("❌ محصول پیدا نشد.");
 
-            await product.save();
 
-            // ریست وضعیت کاربر
-            user.editProductField = null;
-            user.editingProductId = null;
-            await user.save();
-
-            // آپدیت پیام محصول (همون پیامی که دکمه ویرایش داشت)
-            await ctx.editMessageCaption(
-                `✅ بروزرسانی شد:\n\n🛒 ${product.title}\n💰 ${product.price}\n📏 ${product.size}\n📂 ${product.category}`,
-                {
-                    reply_markup: {
-                        inline_keyboard: [
-                            [{ text: "✏️ ویرایش", callback_data: `edit_product_${product._id}` }],
-                        ],
-                    },
-                }
-            );
-
-            return ctx.reply("✅ تغییر ذخیره شد.");
+        switch (user.editProductField) {
+            case "edit_product_title": product.title = ctx.message.text; break;
+            case "edit_product_description": product.description = ctx.message.text; break;
+            case "edit_product_price": product.price = ctx.message.text; break;
+            case "edit_product_category": product.category = ctx.message.text; break;
+            case "edit_product_size": product.size = ctx.message.text; break;
+            case "edit_product_photo": product.photoUrl = ctx.message.text; break;
         }
 
+
+
+        await product.save();
+        console.log("[DEBUG] product updated:", product);
+
+        // ریست وضعیت ادمین
+        user.editProductField = null;
+        user.editingProductId = null;
+        await user.save();
+
+        await ctx.editMessageCaption(
+            `✅ بروزرسانی شد:\n\n🛒 ${product.title}\n💰 ${product.price}\n📏 ${product.size}\n📂 ${product.category}`,
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: "✏️ ویرایش", callback_data: `edit_product_${product._id}` }],
+                    ],
+                },
+            }
+        );
+
+        return ctx.reply("✅ تغییر ذخیره شد.");
     }
 
     // ---- مدیریت مراحل آدرس ----
