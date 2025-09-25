@@ -1510,18 +1510,16 @@ bot.on("text", async (ctx) => {
         admin.editingProductId = null;
         await admin.save();
 
-        await ctx.editMessageCaption(
-            `✅ بروزرسانی شد:\n\n🛒 ${product.title}\n💰 ${product.price}\n📏 ${product.size}\n📂 ${product.category}`,
-            {
-                reply_markup: {
-                    inline_keyboard: [
-                        [{ text: "✏️ ویرایش", callback_data: `edit_product_${product._id}` }],
-                        [{ text: "🏠 منوی مدیریت", callback_data: "admin_menu" }]
-
-                    ],
-                },
+        await ctx.replyWithPhoto(product.photoUrl, {
+            caption: `✅ بروزرسانی شد:\n\n🛒 ${product.title}\n💰 ${product.price}\n📏 ${product.size}\n📂 ${product.category}`,
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: "✏️ ویرایش", callback_data: `edit_product_${product._id}` }],
+                    [{ text: "🏠 منوی مدیریت", callback_data: "admin_menu" }]
+                ]
             }
-        );
+        });
+
 
         return ctx.reply("✅ تغییر ذخیره شد.");
     }
