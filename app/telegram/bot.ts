@@ -561,6 +561,17 @@ bot.action(/change_status_(.+)/, async (ctx) => {
         );
     }
 
+    if (order.status === "approved") {
+        keyboard.push(
+            [
+                {
+                    text: "📦 ارسال شد",
+                    callback_data: `send_tracking_${order._id}`,
+                },
+            ]
+        )
+    }
+
     keyboard.push([{ text: "🏠 منوی ادمین", callback_data: "admin_menu" }]);
 
     await ctx.editMessageReplyMarkup({
