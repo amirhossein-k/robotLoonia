@@ -409,6 +409,8 @@ bot.action("admin_manage_products", async (ctx) => {
             reply_markup: {
                 inline_keyboard: [
                     [{ text: "✏️ ویرایش", callback_data: `edit_product_${p._id}` }],
+                    [{ text: "🏠 منوی مدیریت", callback_data: "admin_menu" }]
+
                 ],
             },
         });
@@ -1517,6 +1519,8 @@ bot.on("text", async (ctx) => {
                 reply_markup: {
                     inline_keyboard: [
                         [{ text: "✏️ ویرایش", callback_data: `edit_product_${product._id}` }],
+                        [{ text: "🏠 منوی مدیریت", callback_data: "admin_menu" }]
+
                     ],
                 },
             }
