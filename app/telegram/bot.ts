@@ -354,6 +354,7 @@ bot.action("admin_menu", async (ctx) => {
         reply_markup: {
             inline_keyboard: [
                 [{ text: "➕ افزودن محصول", callback_data: "admin_add_product" }],
+                [{ text: "📦 مدیریت محصولات", callback_data: "admin_manage_products" }],
                 [{ text: "📦 لیست محصولات", callback_data: "list" }],
                 [{ text: "🛒 لیست سفارشات", callback_data: "admin_orders" }],
                 [{ text: "👥 کاربران سفارش‌دهنده", callback_data: "admin_order_users" }],
@@ -363,6 +364,149 @@ bot.action("admin_menu", async (ctx) => {
     });
     await ctx.answerCbQuery(); // برای بستن لودینگ تلگرام
 });
+// نمایش لیست محصولات
+bot.action("admin_manage_products", async (ctx) => {
+    await connectDB();
+    const products = await Product.find();
+
+    if (products.length === 0) {
+        return ctx.reply("❌ هیچ محصولی یافت نشد.");
+    }
+
+    for (const p of products) {
+        await ctx.replyWithPhoto(p.photoUrl, {
+            caption: `🛒 ${p.title}\n💰 ${p.price}\n📏 ${p.size}\n📂 ${p.category}`,
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: "✏️ ویرایش", callback_data: `edit_product_${p._id}` }],
+                ],
+            },
+        });
+    }
+
+    await ctx.answerCbQuery();
+});
+// منوی ویرایش محصول
+bot.action(/edit_product_(.+)/, async (ctx) => {
+    await connectDB();
+    const productId = ctx.match[1];
+    const product = await Product.findById(productId);
+
+    if (!product) return ctx.reply("❌ محصول پیدا نشد.");
+
+    const keyboard = [
+        [{ text: "📝 تغییر نام", callback_data: `edit_title_${product._id}` }],
+        [{ text: "📄 تغییر توضیحات", callback_data: `edit_desc_${product._id}` }],
+        [{ text: "💰 تغییر قیمت", callback_data: `edit_price_${product._id}` }],
+        [{ text: "📂 تغییر دسته‌بندی", callback_data: `edit_category_${product._id}` }],
+        [{ text: "📏 تغییر اندازه", callback_data: `edit_size_${product._id}` }],
+        [{ text: "📸 تغییر عکس", callback_data: `edit_photo_${product._id}` }],
+        [{ text: "⬅️ بازگشت", callback_data: "admin_manage_products" }],
+    ];
+
+    await ctx.editMessageCaption(
+        `✏️ ویرایش محصول:\n\n🛒 ${product.title}\n💰 ${product.price}\n📏 ${product.size}\n📂 ${product.category}`,
+        { reply_markup: { inline_keyboard: keyboard } }
+    );
+    await ctx.answerCbQuery();
+});
+// تغییر فیلدهای محصول
+// نمایش لیست محصولات در پنل ادمین
+bot.action("admin_manage_products", async (ctx) => {
+    await connectDB();
+    const products = await Product.find();
+
+    if (products.length === 0) {
+        return ctx.editMessageText("❌ هیچ محصولی یافت نشد.");
+    }
+
+    for (const p of products) {
+        await ctx.replyWithPhoto(p.photo, {
+            caption: `🛒 ${p.title}\n💰 ${p.price}\n📏 ${p.size}\n📂 ${p.category}`,
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: "✏️ ویرایش", callback_data: `edit_product_${p._id}` }],
+                ],
+            },
+        });
+    }
+
+    await ctx.answerCbQuery();
+});
+
+
+// منوی ویرایش محصول
+bot.action(/edit_product_(.+)/, async (ctx) => {
+    await connectDB();
+    const productId = ctx.match[1];
+    const product = await Product.findById(productId);
+
+    if (!product) return ctx.answerCbQuery("❌ محصول پیدا نشد.");
+
+    const keyboard = [
+        [{ text: "📝 تغییر نام", callback_data: `field_title_${product._id}` }],
+        [{ text: "📄 تغییر توضیحات", callback_data: `field_desc_${product._id}` }],
+        [{ text: "💰 تغییر قیمت", callback_data: `field_price_${product._id}` }],
+        [{ text: "📂 تغییر دسته‌بندی", callback_data: `field_category_${product._id}` }],
+        [{ text: "📏 تغییر اندازه", callback_data: `field_size_${product._id}` }],
+        [{ text: "📸 تغییر عکس", callback_data: `field_photo_${product._id}` }],
+        [{ text: "⬅️ بازگشت", callback_data: "admin_manage_products" }],
+    ];
+
+    await ctx.editMessageCaption(
+        `✏️ ویرایش محصول:\n\n🛒 ${product.title}\n💰 ${product.price}\n📏 ${product.size}\n📂 ${product.category}`,
+        { reply_markup: { inline_keyboard: keyboard } }
+    );
+    await ctx.answerCbQuery();
+});
+
+
+// هندلر انتخاب هر فیلد
+bot.action(/field_(.+)_(.+)/, async (ctx) => {
+    const field = ctx.match[1]; // title, desc, price ...
+    const productId = ctx.match[2];
+
+    const targetName = '09391470427'
+    await connectDB(); // ⭐ حتما اضافه کن
+
+    const admin = await User.findOne({ name: targetName });
+    admin.editProductFiled = `edit_product_${field}`;
+    admin.editingProductId = productId;
+    await admin.save();
+
+    let msg = "";
+    switch (field) {
+        case "title":
+            msg = "📝 نام جدید محصول را وارد کنید:";
+            break;
+        case "desc":
+            msg = "📄 توضیحات جدید محصول را وارد کنید:";
+            break;
+        case "price":
+            msg = "💰 قیمت جدید محصول را وارد کنید:";
+            break;
+        case "category":
+            msg = "📂 دسته‌بندی جدید محصول را وارد کنید:";
+            break;
+        case "size":
+            msg = "📏 اندازه جدید محصول را وارد کنید:";
+            break;
+        case "photo":
+            msg = "📸 عکس جدید محصول را ارسال کنید:";
+            break;
+    }
+
+    await ctx.reply(msg);
+    await ctx.answerCbQuery();
+});
+
+
+
+
+
+
+
+// منوی کاربر
 bot.action("user_menu", async (ctx) => {
     const targetName = '09391470427'
     const telegramId = await findTelegramIdByName(targetName);
@@ -1231,14 +1375,20 @@ setInterval(async () => {
 
 // ارسال پیام
 bot.on("text", async (ctx) => {
+    // ایدی ادمین
     const targetName = '09391470427'
-    const telegramId = await findTelegramIdByName(targetName);
+    // const telegramId = await findTelegramIdByName(targetName);
+    await connectDB(); // ⭐ حتما اضافه کن
+
+    const admin = await User.findOne({ name: targetName });
+    const telegramId = admin.telegramId
     if (!telegramId) {
         await ctx.reply("❌ کاربر پیدا نشد!");
         return ctx.answerCbQuery();
     }
 
-    await connectDB();
+
+
 
 
     const adminId = ctx.from.id;
@@ -1304,6 +1454,44 @@ bot.on("text", async (ctx) => {
 
     const user = await User.findOne({ telegramId: ctx.from.id });
     if (!user) return;
+
+
+    if (user.edit && user.editingProductId) {
+        // find product on edit
+        const product = await Product.findById(user.editingProductId);
+        if (!product) {
+            await ctx.reply("❌ محصول پیدا نشد.");
+        } else {
+            if (user.step === "edit_product_title") product.title = ctx.message.text;
+            if (user.step === "edit_product_desc") product.description = ctx.message.text;
+            if (user.step === "edit_product_price") product.price = ctx.message.text;
+            if (user.step === "edit_product_category") product.category = ctx.message.text;
+            if (user.step === "edit_product_size") product.size = ctx.message.text;
+
+            await product.save();
+
+            // ریست وضعیت کاربر
+            user.step = null;
+            user.editingProductId = null;
+            await user.save();
+
+            // آپدیت پیام محصول (همون پیامی که دکمه ویرایش داشت)
+            await ctx.editMessageCaption(
+                `✅ بروزرسانی شد:\n\n🛒 ${product.title}\n💰 ${product.price}\n📏 ${product.size}\n📂 ${product.category}`,
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: "✏️ ویرایش", callback_data: `edit_product_${product._id}` }],
+                        ],
+                    },
+                }
+            );
+
+            return ctx.reply("✅ تغییر ذخیره شد.");
+        }
+
+    }
+
     // ---- مدیریت مراحل آدرس ----
     if (user.step === "address_province") {
         user.provinceText = ctx.message.text.trim();
@@ -1461,6 +1649,40 @@ bot.on("photo", async (ctx) => {
     await connectDB();
     const user = await User.findOne({ telegramId: ctx.from.id });
     if (!user) return;
+
+    // --- تغییر عکس محصول (ویرایش) ---
+    if (user.step === "edit_product_photo" && user.editingProductId) {
+        const product = await Product.findById(user.editingProductId);
+        if (!product) {
+            await ctx.reply("❌ محصول پیدا نشد.");
+        } else {
+            const fileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
+            product.photo = fileId;
+            await product.save();
+
+            user.step = null;
+            user.editingProductId = null;
+            await user.save();
+
+            await ctx.editMessageMedia(
+                {
+                    type: "photo",
+                    media: fileId,
+                    caption: `✅ بروزرسانی شد:\n\n🛒 ${product.title}\n💰 ${product.price}\n📏 ${product.size}\n📂 ${product.category}`,
+                },
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: "✏️ ویرایش", callback_data: `edit_product_${product._id}` }],
+                        ],
+                    },
+                }
+            );
+
+            return ctx.reply("✅ عکس تغییر یافت.");
+        }
+    }
+
 
     const chatWith = activeChats.get(Number(user.telegramId));
     // ارسال به طرف مقابل اگر چت فعال است
