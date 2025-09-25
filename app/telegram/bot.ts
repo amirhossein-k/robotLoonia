@@ -538,6 +538,8 @@ ${order.paymentReceipt ? "📑 رسید پرداخت: ✅ دارد" : "📑 رس
 });
 // 📌 هندلر دکمه تغییر وضعیت محصول
 bot.action(/change_status_(.+)/, async (ctx) => {
+    await connectDB(); // 👈 فراموش نشه
+
     const orderId = ctx.match[1];
     const order = await Order.findById(orderId).populate("productId");
 
