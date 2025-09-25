@@ -437,6 +437,8 @@ bot.action("admin_manage_products", async (ctx) => {
 
 // منوی ویرایش محصول
 bot.action(/edit_product_(.+)/, async (ctx) => {
+    console.log(`[DEBUG] /edit_product_(.+)/ action `)
+
     await connectDB();
     const productId = ctx.match[1];
     const product = await Product.findById(productId);
@@ -463,6 +465,8 @@ bot.action(/edit_product_(.+)/, async (ctx) => {
 
 // هندلر انتخاب هر فیلد
 bot.action(/field_(.+)_(.+)/, async (ctx) => {
+    console.log(`[DEBUG] /field_(.+)_(.+)/ action `)
+
     const field = ctx.match[1]; // title, desc, price ...
     const productId = ctx.match[2];
 
@@ -1457,6 +1461,7 @@ bot.on("text", async (ctx) => {
 
 
     if (user.edit && user.editingProductId) {
+        console.log(`[DEBUG] text action edit product mode`)
         // find product on edit
         const product = await Product.findById(user.editingProductId);
         if (!product) {
