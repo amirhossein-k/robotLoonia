@@ -38,8 +38,11 @@ export function profileHandler() {
                             reply_markup: {
                                 inline_keyboard: [
                                     [{ text: "➕ افزودن محصول", callback_data: "admin_add_product" }],
+                                    [{ text: "📦 مدیریت محصولات", callback_data: "admin_manage_products" }],
                                     [{ text: "📦 لیست محصولات", callback_data: "list" }],
                                     [{ text: "🛒 لیست سفارشات", callback_data: "admin_orders" }],
+                                    [{ text: "👥 کاربران سفارش‌دهنده", callback_data: "admin_order_users" }],
+
                                 ],
                             },
                         });
