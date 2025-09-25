@@ -824,7 +824,7 @@ bot.action(/change_status_(.+)/, async (ctx) => {
 })
 
 // 📌 تابع کمکی برای نمایش وضعیت به فارسی
-function translateStatus(status: string): string {
+export function translateStatus(status: string): string {
     switch (status) {
         case "pending": return "⏳ در انتظار بررسی";
         case "awaiting_payment": return "💳 در انتظار پرداخت";

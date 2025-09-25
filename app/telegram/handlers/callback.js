@@ -2,7 +2,7 @@
 import { connectDB } from "@/app/lib/mongodb";
 import User from "@/app/model/User";
 import { searchHandler } from "./searchHandler";
-import { activeChats } from "../bot";
+import { activeChats, translateStatus } from "../bot";
 import { productsHandler, userProductPage } from "./products";
 import Order from "@/app/model/Order";
 import Product from "@/app/model/product";
