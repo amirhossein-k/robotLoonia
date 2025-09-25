@@ -385,6 +385,8 @@ bot.action("admin_manage_products", async (ctx) => {
             reply_markup: {
                 inline_keyboard: [
                     [{ text: "✏️ ویرایش", callback_data: `edit_product_${p._id}` }],
+                    [{ text: "🏠 منوی مدیریت", callback_data: "admin_menu" }]
+
                 ],
             },
         });
@@ -395,29 +397,7 @@ bot.action("admin_manage_products", async (ctx) => {
 
 // تغییر فیلدهای محصول
 // نمایش لیست محصولات در پنل ادمین
-bot.action("admin_manage_products", async (ctx) => {
-    await connectDB();
-    const products = await Product.find();
 
-    if (products.length === 0) {
-        return ctx.editMessageText("❌ هیچ محصولی یافت نشد.");
-    }
-
-    for (const p of products) {
-        await ctx.replyWithPhoto(p.photo, {
-            caption: `🛒 ${p.title}\n💰 ${p.price}\n📏 ${p.size}\n📂 ${p.category}`,
-            reply_markup: {
-                inline_keyboard: [
-                    [{ text: "✏️ ویرایش", callback_data: `edit_product_${p._id}` }],
-                    [{ text: "🏠 منوی مدیریت", callback_data: "admin_menu" }]
-
-                ],
-            },
-        });
-    }
-
-    await ctx.answerCbQuery();
-});
 
 
 // منوی ویرایش محصول
@@ -560,7 +540,9 @@ bot.action("user_menu", async (ctx) => {
                             [
                                 { text: "❌ لغو سفارش", callback_data: `cancel_${order._id}` },
                                 { text: "💬 چت با ادمین", callback_data: `chat_${telegramId}` }
-                            ]
+                            ],
+                            [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }],
+
                         ]
                     },
                 });
@@ -575,7 +557,9 @@ bot.action("user_menu", async (ctx) => {
                                 [
                                     { text: "❌ لغو سفارش", callback_data: `cancel_${order._id}` },
                                     { text: "💬 چت با ادمین", callback_data: `chat_${telegramId}` }
-                                ]
+                                ],
+                                [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }],
+
                             ]
                         }
                     }
@@ -600,7 +584,9 @@ bot.action("user_menu", async (ctx) => {
                             inline_keyboard: [
                                 [
                                     { text: "💬 چت با ادمین", callback_data: `chat_${telegramId}` }
-                                ]
+                                ],
+                                [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }],
+
                             ]
                         }
                     }
@@ -620,6 +606,8 @@ bot.action("user_menu", async (ctx) => {
                                     { text: "💬 چت با ادمین", callback_data: `chat_${telegramId}` },
                                     { text: "💳 اقدام دوباره", callback_data: `retry_payment_${order._id}` }
                                 ],
+                                [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }],
+
 
                             ]
                         }
@@ -675,7 +663,16 @@ bot.action("peigiri", async (ctx) => {
     }
 
     // ارسال کد رهگیری
-    await ctx.reply(`📦 کد رهگیری سفارش شما: ${order.trackingCode}`);
+    await ctx.reply(`📦 کد رهگیری سفارش شما: ${order.trackingCode}`,
+        {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }],
+
+                ]
+            },
+        }
+    );
     await ctx.answerCbQuery();
 });
 
