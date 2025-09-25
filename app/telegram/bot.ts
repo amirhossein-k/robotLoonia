@@ -253,7 +253,7 @@ bot.action(/send_tracking_(.+)/, async (ctx) => {
 
 });
 // پیام ارسال شد و اضافه کردن کد رهگیری پستی در لیست کاربران
-bot.action(/send_tracking_List_(.+)/, async (ctx) => {
+bot.action(/send_trackingList_(.+)/, async (ctx) => {
     await connectDB();
     const orderId = ctx.match[1];
     const order = await Order.findById(orderId);
@@ -599,7 +599,7 @@ bot.action(/change_status_(.+)/, async (ctx) => {
             [
                 {
                     text: "📦 ارسال شد",
-                    callback_data: `send_tracking_List_${order._id}`,
+                    callback_data: `send_trackingList_${order._id}`,
                 },
             ]
         )
