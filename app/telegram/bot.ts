@@ -676,6 +676,12 @@ bot.action(/change_status_(.+)/, async (ctx) => {
         )
 
     }
+    // 📌 دکمه نمایش رسیدهای ردشده
+    if (order.rejectedReceipts?.length > 0) {
+        keyboard.push([
+            { text: "📑 رسیدهای رد شده", callback_data: `show_rejected_receipts_${order._id}` }
+        ]);
+    }
 
     keyboard.push([{ text: "🏠 منوی ادمین", callback_data: "admin_menu" }]);
 
@@ -698,6 +704,27 @@ function translateStatus(status: string): string {
         default: return status;
     }
 }
+// 📌 هندلر نمایش رسیدهای رد شده
+bot.action(/show_rejected_receipts_(.+)/, async (ctx) => {
+    await connectDB();
+
+    const orderId = ctx.match[1];
+    const order = await Order.findById(orderId);
+
+    if (!order) return ctx.reply("❌ سفارش پیدا نشد.");
+    if (!order.rejectedReceipts || order.rejectedReceipts.length === 0) {
+        return ctx.reply("❌ هیچ رسید رد شده‌ای وجود ندارد.");
+    }
+
+    // ارسال همه رسیدهای رد شده یکی یکی
+    for (const receipt of order.rejectedReceipts) {
+        await ctx.replyWithPhoto(receipt.fileId, {
+            caption: `❌ رسید رد شده\n📅 تاریخ: ${new Date(receipt.rejectedAt).toLocaleString("fa-IR", { timeZone: "Asia/Tehran" })}\n👤 ادمین: ${receipt.adminId || "-"}\n📝 دلیل: ${receipt.rejectReason || "-"}`,
+        });
+    }
+
+    await ctx.answerCbQuery("📑 رسیدهای رد شده نمایش داده شد.");
+});
 
 
 bot.action(/cancel_(.+)/, async (ctx) => {
