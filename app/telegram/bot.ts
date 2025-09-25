@@ -392,30 +392,7 @@ bot.action("admin_manage_products", async (ctx) => {
 
     await ctx.answerCbQuery();
 });
-// منوی ویرایش محصول
-bot.action(/edit_product_(.+)/, async (ctx) => {
-    await connectDB();
-    const productId = ctx.match[1];
-    const product = await Product.findById(productId);
 
-    if (!product) return ctx.reply("❌ محصول پیدا نشد.");
-
-    const keyboard = [
-        [{ text: "📝 تغییر نام", callback_data: `edit_title_${product._id}` }],
-        [{ text: "📄 تغییر توضیحات", callback_data: `edit_desc_${product._id}` }],
-        [{ text: "💰 تغییر قیمت", callback_data: `edit_price_${product._id}` }],
-        [{ text: "📂 تغییر دسته‌بندی", callback_data: `edit_category_${product._id}` }],
-        [{ text: "📏 تغییر اندازه", callback_data: `edit_size_${product._id}` }],
-        [{ text: "📸 تغییر عکس", callback_data: `edit_photo_${product._id}` }],
-        [{ text: "⬅️ بازگشت", callback_data: "admin_manage_products" }],
-    ];
-
-    await ctx.editMessageCaption(
-        `✏️ ویرایش محصول:\n\n🛒 ${product.title}\n💰 ${product.price}\n📏 ${product.size}\n📂 ${product.category}`,
-        { reply_markup: { inline_keyboard: keyboard } }
-    );
-    await ctx.answerCbQuery();
-});
 // تغییر فیلدهای محصول
 // نمایش لیست محصولات در پنل ادمین
 bot.action("admin_manage_products", async (ctx) => {
