@@ -10,6 +10,20 @@ export async function findTelegramIdByName(name) {
   return user ? user.telegramId : null;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function isAdmin(ctx) {
+  await connectDB();
+  const adminName = "09391470427"; // اسم ادمین ثابت
+  const admin = await User.findOne({ name: adminName });
+  if (!admin) {
+    // اطلاع به ادمین (یا لاگ)
+    console.log("❌ Admin not found in DB");
+    await ctx.reply("⚠️ شما دسترسی به پنل مدیریت ندارید.");
+    return false;
+  }
+  return true;
+}
+
 // 🕒 زمان به وقت تهران
 // const createdAtTehran = new Intl.DateTimeFormat("fa-IR", {
 //   dateStyle: "full",

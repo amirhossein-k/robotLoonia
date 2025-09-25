@@ -15,7 +15,7 @@ import Chat from "../model/Chat";
 import { getProvinceKeyboard, provinces } from "../lib/provinces";
 import { cities, getCityKeyboard } from "../lib/cities";
 import Order from "../model/Order";
-import { findTelegramIdByName } from "../utiles/morethan";
+import { findTelegramIdByName, isAdmin } from "../utiles/morethan";
 const activeChats = new Map<number, number>();
 const editState = new Map<number, "about" | "searching" | "interests" | "name" | "age">();
 
@@ -57,6 +57,8 @@ bot.action([
 // مرحله 3: ادمین تایید/رد محصول
 // ========================
 bot.action(/approve_product_(.+)/, async (ctx) => {
+    if (!(await isAdmin(ctx))) return; // اگر ادمین وجود ندارد، ادامه نده
+
     await connectDB(); // ⭐ حتما اضافه کن
 
     const orderId = ctx.match[1];
@@ -350,6 +352,8 @@ bot.action(/send_trackingList_(.+)/, async (ctx) => {
 
 });
 bot.action("admin_menu", async (ctx) => {
+    if (!(await isAdmin(ctx))) return; // اگر ادمین وجود ندارد، ادامه نده
+
     await ctx.reply("📌 منوی مدیریت:", {
         reply_markup: {
             inline_keyboard: [
@@ -366,6 +370,8 @@ bot.action("admin_menu", async (ctx) => {
 });
 // نمایش لیست محصولات
 bot.action("admin_manage_products", async (ctx) => {
+    if (!(await isAdmin(ctx))) return; // اگر ادمین وجود ندارد، ادامه نده
+
     await connectDB();
     const products = await Product.find();
 
