@@ -1370,6 +1370,7 @@ bot.on("text", async (ctx) => {
 
     // ایدی ادمین
     const targetName = '09391470427'
+
     // const telegramId = await findTelegramIdByName(targetName);
     await connectDB(); // ⭐ حتما اضافه کن
 
@@ -1410,9 +1411,8 @@ bot.on("text", async (ctx) => {
         // پیام متنی (اسم، سن و ...)
 
         // اگه تو حالت چت نبود → بده به هندلر پروفایل
-        return profileHandler()(ctx);
+        profileHandler()(ctx);
     }
-
     const admin = await User.findOne({ name: targetName });
     const telegramId = admin.telegramId
     if (!telegramId) {
