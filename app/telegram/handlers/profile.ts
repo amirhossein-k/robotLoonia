@@ -52,15 +52,8 @@ export function profileHandler() {
                         return ctx.reply("مرسی که ما را انتخاب کردی برای دیدن محصولات روی دکمه مربوط به ان کلیک کن", {
                             reply_markup: {
                                 inline_keyboard: [
-                                    [{ text: "محصولات", callback_data: "list" }],
-                                    [{ text: "پیگیری سفارش", callback_data: "peigiri" }],
-                                    [{ text: "ادرس", callback_data: "edit_profile" }],
-                                    [
-                                        {
-                                            text: "دسته بندی",
-                                            callback_data: "category",
-                                        },
-                                    ],
+                                    [{ text: "⚙️ منوی فروشگاه", callback_data: "user_menu" }],
+
                                 ]
                             }
                         })
