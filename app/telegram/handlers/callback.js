@@ -189,6 +189,13 @@ export function callbackHandler() {
         .limit(2)
         .populate("productId");
 
+      const targetName = "09391470427";
+      const telegramId = await findTelegramIdByName(targetName);
+      if (!telegramId) {
+        await ctx.reply("❌ کاربر پیدا نشد!");
+        return ctx.answerCbQuery();
+      }
+
       // بررسی وجود سفارش‌ها
       if (lastTwoOrders.length === 0) {
         console.log("❌ سفارشی وجود ندارد");
