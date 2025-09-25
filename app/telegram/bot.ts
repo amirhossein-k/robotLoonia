@@ -207,7 +207,7 @@ bot.action(/reject_receipt_(.+)/, async (ctx) => {
     order.status = "payment_rejected";
     await order.save();
 
-
+    // 
 
     await ctx.telegram.sendMessage(order.userId.telegramId, `❌ فیش واریزی شما تایید نشد. لطفا دوباره اقدام کنید.`, {
         reply_markup: {
