@@ -1510,7 +1510,7 @@ bot.on("text", async (ctx) => {
 
 
 
-    if (user.edit && user.editingProductId) {
+    if (user.editProductFiled && user.editingProductId) {
         console.log(`[DEBUG] text action edit product mode`)
         // find product on edit
         const product = await Product.findById(user.editingProductId);
