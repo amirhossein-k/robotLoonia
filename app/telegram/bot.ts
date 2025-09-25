@@ -243,6 +243,35 @@ bot.action(/send_tracking_(.+)/, async (ctx) => {
 
     if (!order) return ctx.reply("❌ سفارش پیدا نشد.");
 
+
+    order.awaitingTrackingCode = true;
+    order.trackingAdminId = ctx.from.id;
+    await order.save();
+
+    await ctx.reply("📮 لطفاً کد پیگیری مرسوله را وارد کنید:");
+    await ctx.answerCbQuery();
+
+});
+// پیام ارسال شد و اضافه کردن کد رهگیری پستی در لیست کاربران
+bot.action(/send_tracking_List_(.+)/, async (ctx) => {
+    await connectDB();
+    const orderId = ctx.match[1];
+    const order = await Order.findById(orderId);
+
+    if (!order) return ctx.reply("❌ سفارش پیدا نشد.");
+
+    // دکمه های مدیریت برای ادمین به حالت اول برگردد
+    const keyboard = [
+        [{ text: "⚙️ تغییر وضعیت محصول", callback_data: `change_status_${order._id}` }],
+        [{ text: "🏠 منوی ادمین", callback_data: "admin_menu" }]
+
+
+    ];
+    await ctx.editMessageReplyMarkup({
+        inline_keyboard: keyboard
+    });
+
+
     order.awaitingTrackingCode = true;
     order.trackingAdminId = ctx.from.id;
     await order.save();
@@ -564,14 +593,17 @@ bot.action(/change_status_(.+)/, async (ctx) => {
     }
 
     if (order.status === "approved") {
+
+
         keyboard.push(
             [
                 {
                     text: "📦 ارسال شد",
-                    callback_data: `send_tracking_${order._id}`,
+                    callback_data: `send_tracking_List_${order._id}`,
                 },
             ]
         )
+
     }
 
     keyboard.push([{ text: "🏠 منوی ادمین", callback_data: "admin_menu" }]);

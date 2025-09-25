@@ -17,6 +17,7 @@ export interface IOrder extends Document {
     awaitingTrackingCode: boolean;
     trackingAdminId: number | null
     adminMessageId: number | null //ایدی پیامی که برای ادمین رفته برای  اینکه بتونی پاک کنی
+    steplistorder: boolean
 }
 
 const OrderSchema: Schema = new Schema({
@@ -46,6 +47,7 @@ const OrderSchema: Schema = new Schema({
 
     stausReject: { type: Boolean, default: false },
     adminMessageId: { type: Number, default: null },
+    steplistorder: { type: Boolean, default: false }
 
 });
 

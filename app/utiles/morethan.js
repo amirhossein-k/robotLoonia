@@ -40,3 +40,20 @@ export async function findTelegramIdByName(name) {
 //         }
 //     }
 // }
+
+// اگر پیام ادمین ممکن است هم عکس داشته باشد و هم متن معمولی، بهتر است قبل از ویرایش چک کنی:
+//  await ctx.editMessageCaption(
+//             `✅ رسید این محصول تایید شد و وضعیت آن تغییر یافت.`,
+//             {
+//                 reply_markup: {
+//                     inline_keyboard: [
+//                         [{ text: "🏠 منوی مدیریت", callback_data: "admin_menu" }]
+//                     ]
+//                 }
+//             }
+//         );
+
+// یا
+// await ctx.editMessageReplyMarkup({
+//       inline_keyboard: keyboard
+//   });
