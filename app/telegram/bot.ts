@@ -1379,10 +1379,52 @@ setInterval(async () => {
 
 // ارسال پیام
 bot.on("text", async (ctx) => {
+
+
     // ایدی ادمین
     const targetName = '09391470427'
     // const telegramId = await findTelegramIdByName(targetName);
     await connectDB(); // ⭐ حتما اضافه کن
+
+
+    const user = await User.findOne({ telegramId: ctx.from.id });
+    if (!user) return;
+    // آیا کاربر در حال چت هست؟
+    const chatWith = activeChats.get(user.telegramId);
+    // const chatWith = activeChats.get(Number(ctx.from.id));
+
+    const message = ctx.message.text;
+
+
+    if (chatWith) {
+        // چت فعال موجود → پیام ذخیره و ارسال
+        let chat = await Chat.findOne({ users: { $all: [user.telegramId, chatWith] }, endedAt: { $exists: false } });
+        if (!chat) {
+            // اگر چت در DB وجود ندارد، یک چت جدید بساز
+
+            chat = await Chat.create({ users: [user.telegramId, chatWith], messages: [] });
+        }
+        // ذخیره در دیتابیس
+        chat.messages.push({
+            from: user.telegramId,
+            to: chatWith,
+            text: ctx.message.text,
+            type: "text",
+            createdAt: new Date()
+        });
+        await chat.save();
+        //ارسال پیام به طرف مقابل
+        await ctx.telegram.sendMessage(chatWith, `💬 ${user.name === targetName ? 'ادمین' : user.name}: ${message}`, {
+            reply_markup: {
+                inline_keyboard: [[{ text: "❌ قطع ارتباط", callback_data: "end_chat" }]]
+            }
+        });
+    } else {
+        // پیام متنی (اسم، سن و ...)
+
+        // اگه تو حالت چت نبود → بده به هندلر پروفایل
+        return profileHandler()(ctx);
+    }
 
     const admin = await User.findOne({ name: targetName });
     const telegramId = admin.telegramId
@@ -1456,8 +1498,6 @@ bot.on("text", async (ctx) => {
         return ctx.reply("✅ کد پیگیری ثبت و برای کاربر ارسال شد.");
     }
 
-    const user = await User.findOne({ telegramId: ctx.from.id });
-    if (!user) return;
 
 
     if (user.edit && user.editingProductId) {
@@ -1611,42 +1651,7 @@ bot.on("text", async (ctx) => {
         return ctx.reply("📸 لطفاً عکس محصول را ارسال کنید:");
     }
 
-    // آیا کاربر در حال چت هست؟
-    const chatWith = activeChats.get(user.telegramId);
-    // const chatWith = activeChats.get(Number(ctx.from.id));
 
-    const message = ctx.message.text;
-
-
-    if (chatWith) {
-        // چت فعال موجود → پیام ذخیره و ارسال
-        let chat = await Chat.findOne({ users: { $all: [user.telegramId, chatWith] }, endedAt: { $exists: false } });
-        if (!chat) {
-            // اگر چت در DB وجود ندارد، یک چت جدید بساز
-
-            chat = await Chat.create({ users: [user.telegramId, chatWith], messages: [] });
-        }
-        // ذخیره در دیتابیس
-        chat.messages.push({
-            from: user.telegramId,
-            to: chatWith,
-            text: ctx.message.text,
-            type: "text",
-            createdAt: new Date()
-        });
-        await chat.save();
-        //ارسال پیام به طرف مقابل
-        await ctx.telegram.sendMessage(chatWith, `💬 ${user.name === targetName ? 'ادمین' : user.name}: ${message}`, {
-            reply_markup: {
-                inline_keyboard: [[{ text: "❌ قطع ارتباط", callback_data: "end_chat" }]]
-            }
-        });
-    } else {
-        // پیام متنی (اسم، سن و ...)
-
-        // اگه تو حالت چت نبود → بده به هندلر پروفایل
-        return profileHandler()(ctx);
-    }
 });
 
 // پیام تصویری
