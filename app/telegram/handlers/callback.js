@@ -194,7 +194,7 @@ export function callbackHandler() {
         console.log("❌ سفارشی وجود ندارد");
       } else {
         for (const order of lastTwoOrders) {
-          if (order.status !== "approved") {
+          if (order.status !== "approved" && order.stausReject === false) {
             await ctx.reply("⛔ لطفاً ابتدا سفارش‌های باز خود را تکمیل کنید.");
             await bot.actions.get("user_menu")?.(ctx); // یا ctx.update.callback_query را شبیه‌سازی کن
 
